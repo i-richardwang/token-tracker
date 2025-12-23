@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { logs } from "@/lib/db/schema";
-import { sql, gte, eq, and, count, avg, sum, desc } from "drizzle-orm";
+import { normalizeModelName } from "@/lib/model-mapping";
+import { sql, gte, eq, and, count, avg, sum } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
       successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
     };
 
-    const [tokensTrend, costTrend, requestsTrend, byProvider, requestsByModel, tpsByModelRaw] =
+    const [tokensTrend, costTrend, requestsTrend, byProvider, requestsByModelRaw, tpsByModelRaw] =
       await Promise.all([
         db
           .select({
@@ -114,9 +115,7 @@ export async function GET(request: NextRequest) {
           })
           .from(logs)
           .where(gte(logs.timestamp, startDate))
-          .groupBy(logs.model)
-          .orderBy(desc(count()))
-          .limit(8),
+          .groupBy(logs.model),
         db
           .select({
             model: logs.model,
@@ -128,13 +127,32 @@ export async function GET(request: NextRequest) {
           .groupBy(logs.model),
       ]);
 
-    const tpsByModel = tpsByModelRaw
-      .map((m) => {
-        const completionTokens = Number(m.completionTokens ?? 0);
-        const totalLatencyMs = Number(m.totalLatency ?? 0);
-        const tps = totalLatencyMs > 0 ? (completionTokens / totalLatencyMs) * 1000 : 0;
-        return { model: m.model, tps };
-      })
+    // Aggregate requests by normalized model name
+    const requestsByModelMap = new Map<string, number>();
+    for (const item of requestsByModelRaw) {
+      const model = normalizeModelName(item.model);
+      const current = requestsByModelMap.get(model) ?? 0;
+      requestsByModelMap.set(model, current + Number(item.requests));
+    }
+    const requestsByModel = Array.from(requestsByModelMap.entries())
+      .map(([model, requests]) => ({ model, requests }))
+      .sort((a, b) => b.requests - a.requests)
+      .slice(0, 8);
+
+    // Aggregate TPS data by normalized model name
+    const tpsByModelMap = new Map<string, { completionTokens: number; totalLatency: number }>();
+    for (const item of tpsByModelRaw) {
+      const model = normalizeModelName(item.model);
+      const current = tpsByModelMap.get(model) ?? { completionTokens: 0, totalLatency: 0 };
+      current.completionTokens += Number(item.completionTokens ?? 0);
+      current.totalLatency += Number(item.totalLatency ?? 0);
+      tpsByModelMap.set(model, current);
+    }
+    const tpsByModel = Array.from(tpsByModelMap.entries())
+      .map(([model, data]) => ({
+        model,
+        tps: data.totalLatency > 0 ? (data.completionTokens / data.totalLatency) * 1000 : 0,
+      }))
       .sort((a, b) => b.tps - a.tps)
       .slice(0, 8);
 
@@ -158,10 +176,7 @@ export async function GET(request: NextRequest) {
         tokens: Number(p.tokens ?? 0),
         cost: Number(p.cost ?? 0),
       })),
-      requestsByModel: requestsByModel.map((m) => ({
-        model: m.model,
-        requests: Number(m.requests),
-      })),
+      requestsByModel,
       tpsByModel,
     });
   } catch (error) {
