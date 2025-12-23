@@ -3,11 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardSummary } from "@/lib/types";
 import {
-  Coins,
-  Zap,
   Activity,
-  Clock,
+  Zap,
+  DollarSign,
   CheckCircle,
+  Hash,
+  Gauge,
+  Clock,
+  Receipt,
 } from "lucide-react";
 
 interface StatsCardsProps {
@@ -15,51 +18,43 @@ interface StatsCardsProps {
 }
 
 function formatNumber(num: number): string {
-  if (num >= 1_000_000) {
-    return (num / 1_000_000).toFixed(1) + "M";
-  }
-  if (num >= 1_000) {
-    return (num / 1_000).toFixed(1) + "K";
-  }
+  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
+  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
   return num.toFixed(1);
 }
 
 function formatCost(num: number): string {
-  return "$" + num.toFixed(1);
+  return "$" + num.toFixed(2);
 }
 
 function formatLatency(ms: number): string {
-  if (ms >= 1_000) {
-    return (ms / 1_000).toFixed(1) + "s";
-  }
+  if (ms >= 1_000) return (ms / 1_000).toFixed(1) + "s";
   return ms.toFixed(1) + "ms";
+}
+
+function formatTps(tps: number): string {
+  return tps.toFixed(1) + "/s";
 }
 
 export function StatsCards({ summary }: StatsCardsProps) {
   const stats = [
     {
+      title: "Total Requests",
+      value: formatNumber(summary.totalRequests),
+      description: "API calls made",
+      icon: Activity,
+    },
+    {
       title: "Total Tokens",
       value: formatNumber(summary.totalTokens),
-      description: `${formatNumber(summary.promptTokens)} prompt / ${formatNumber(summary.completionTokens)} completion`,
+      description: `${formatNumber(summary.completionTokens)} completion`,
       icon: Zap,
     },
     {
       title: "Total Cost",
       value: formatCost(summary.totalCost),
-      description: "Accumulated cost",
-      icon: Coins,
-    },
-    {
-      title: "Requests",
-      value: formatNumber(summary.totalRequests),
-      description: "Total API calls",
-      icon: Activity,
-    },
-    {
-      title: "Avg Latency",
-      value: formatLatency(summary.avgLatency),
-      description: "Average response time",
-      icon: Clock,
+      description: "Accumulated spending",
+      icon: DollarSign,
     },
     {
       title: "Success Rate",
@@ -67,10 +62,34 @@ export function StatsCards({ summary }: StatsCardsProps) {
       description: "Successful requests",
       icon: CheckCircle,
     },
+    {
+      title: "Avg Tokens/Req",
+      value: formatNumber(summary.avgTokensPerRequest),
+      description: "Tokens per request",
+      icon: Hash,
+    },
+    {
+      title: "Avg TPS",
+      value: formatTps(summary.avgTps),
+      description: "Tokens per second",
+      icon: Gauge,
+    },
+    {
+      title: "Avg Latency",
+      value: formatLatency(summary.avgLatency),
+      description: "Response time",
+      icon: Clock,
+    },
+    {
+      title: "Avg Cost/Req",
+      value: formatCost(summary.avgCostPerRequest),
+      description: "Cost per request",
+      icon: Receipt,
+    },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
       {stats.map((stat) => (
         <Card key={stat.title} size="sm">
           <CardHeader className="flex flex-row items-center justify-between pb-2">

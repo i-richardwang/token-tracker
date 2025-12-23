@@ -2,13 +2,15 @@ export interface DashboardSummary {
   totalRequests: number;
   totalTokens: number;
   totalCost: number;
-  avgLatency: number;
-  promptTokens: number;
   completionTokens: number;
+  avgLatency: number;
+  avgTps: number;
+  avgTokensPerRequest: number;
+  avgCostPerRequest: number;
   successRate: number;
 }
 
-export interface TokenTrendItem {
+export interface TokensTrendItem {
   date: string;
   prompt: number;
   completion: number;
@@ -19,28 +21,33 @@ export interface CostTrendItem {
   cost: number;
 }
 
-export interface ProviderDistributionItem {
+export interface RequestsTrendItem {
+  date: string;
+  requests: number;
+}
+
+export interface ByProviderItem {
   provider: string;
-  count: number;
   tokens: number;
+  cost: number;
 }
 
-export interface ModelDistributionItem {
+export interface RequestsByModelItem {
   model: string;
-  count: number;
-  tokens: number;
+  requests: number;
 }
 
-export interface StatusDistributionItem {
-  status: string;
-  count: number;
+export interface TpsByModelItem {
+  model: string;
+  tps: number;
 }
 
 export interface DashboardData {
   summary: DashboardSummary;
-  tokenTrend: TokenTrendItem[];
+  tokensTrend: TokensTrendItem[];
   costTrend: CostTrendItem[];
-  providerDistribution: ProviderDistributionItem[];
-  modelDistribution: ModelDistributionItem[];
-  statusDistribution: StatusDistributionItem[];
+  requestsTrend: RequestsTrendItem[];
+  byProvider: ByProviderItem[];
+  requestsByModel: RequestsByModelItem[];
+  tpsByModel: TpsByModelItem[];
 }

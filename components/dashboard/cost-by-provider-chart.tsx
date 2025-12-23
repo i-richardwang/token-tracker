@@ -17,29 +17,36 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { StatusDistributionItem } from "@/lib/types";
+import type { ByProviderItem } from "@/lib/types";
 
-interface StatusPieChartProps {
-  data: StatusDistributionItem[];
+interface CostByProviderChartProps {
+  data: ByProviderItem[];
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-  success: { label: "Success", color: "var(--chart-2)" },
-  error: { label: "Error", color: "var(--chart-5)" },
-  pending: { label: "Pending", color: "var(--chart-3)" },
-};
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+] as const;
 
-const DEFAULT_STATUS_CONFIG = { label: "Unknown", color: "var(--chart-4)" };
+function formatCost(value: number): string {
+  return "$" + value.toFixed(1);
+}
 
-export function StatusPieChart({ data }: StatusPieChartProps) {
+export function CostByProviderChart({ data }: CostByProviderChartProps) {
   const { chartConfig, chartData } = useMemo(() => {
     const config: ChartConfig = {};
-    const processedData = data.map((item) => {
-      const statusConfig = STATUS_CONFIG[item.status] ?? DEFAULT_STATUS_CONFIG;
-      config[item.status] = statusConfig;
+    const processedData = data.map((item, index) => {
+      const colorVar = CHART_COLORS[index % CHART_COLORS.length];
+      config[item.provider] = {
+        label: item.provider,
+        color: colorVar,
+      };
       return {
         ...item,
-        fill: `var(--color-${item.status})`,
+        fill: `var(--color-${item.provider})`,
       };
     });
     return { chartConfig: config, chartData: processedData };
@@ -48,25 +55,30 @@ export function StatusPieChart({ data }: StatusPieChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Request Status</CardTitle>
-        <CardDescription>Success vs error rate</CardDescription>
+        <CardTitle>Cost by Provider</CardTitle>
+        <CardDescription>Cost distribution</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={
+                <ChartTooltipContent
+                  hideLabel
+                  formatter={(value) => formatCost(Number(value))}
+                />
+              }
             />
             <Pie
               data={chartData}
-              dataKey="count"
-              nameKey="status"
+              dataKey="cost"
+              nameKey="provider"
               innerRadius={50}
               outerRadius={80}
             />
             <ChartLegend
-              content={<ChartLegendContent nameKey="status" />}
+              content={<ChartLegendContent nameKey="provider" />}
               verticalAlign="bottom"
             />
           </PieChart>

@@ -15,24 +15,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ModelDistributionItem } from "@/lib/types";
+import type { RequestsByModelItem } from "@/lib/types";
 
-interface ModelBarChartProps {
-  data: ModelDistributionItem[];
+interface RequestsByModelChartProps {
+  data: RequestsByModelItem[];
 }
 
 const chartConfig = {
-  count: {
+  requests: {
     label: "Requests",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
 
-function truncateModelName(name: string, maxLength = 20): string {
+function truncateModelName(name: string, maxLength = 28): string {
   return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
 }
 
-export function ModelBarChart({ data }: ModelBarChartProps) {
+export function RequestsByModelChart({ data }: RequestsByModelChartProps) {
   const chartData = useMemo(
     () =>
       data.map((item) => ({
@@ -45,8 +45,8 @@ export function ModelBarChart({ data }: ModelBarChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Model Usage</CardTitle>
-        <CardDescription>Request count by model</CardDescription>
+        <CardTitle>Requests by Model</CardTitle>
+        <CardDescription>Top models by request count</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -63,7 +63,7 @@ export function ModelBarChart({ data }: ModelBarChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={10}
-              width={110}
+              width={160}
             />
             <ChartTooltip
               cursor={false}
@@ -76,7 +76,7 @@ export function ModelBarChart({ data }: ModelBarChartProps) {
                 />
               }
             />
-            <Bar dataKey="count" fill="var(--color-count)" radius={5} />
+            <Bar dataKey="requests" fill="var(--color-requests)" radius={5} />
           </BarChart>
         </ChartContainer>
       </CardContent>

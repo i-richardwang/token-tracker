@@ -17,10 +17,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ProviderDistributionItem } from "@/lib/types";
+import type { ByProviderItem } from "@/lib/types";
 
-interface ProviderPieChartProps {
-  data: ProviderDistributionItem[];
+interface TokensByProviderChartProps {
+  data: ByProviderItem[];
 }
 
 const CHART_COLORS = [
@@ -31,7 +31,7 @@ const CHART_COLORS = [
   "var(--chart-5)",
 ] as const;
 
-export function ProviderPieChart({ data }: ProviderPieChartProps) {
+export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
   const { chartConfig, chartData } = useMemo(() => {
     const config: ChartConfig = {};
     const processedData = data.map((item, index) => {
@@ -51,8 +51,8 @@ export function ProviderPieChart({ data }: ProviderPieChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Provider Distribution</CardTitle>
-        <CardDescription>Usage by provider</CardDescription>
+        <CardTitle>Tokens by Provider</CardTitle>
+        <CardDescription>Token usage distribution</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -63,7 +63,7 @@ export function ProviderPieChart({ data }: ProviderPieChartProps) {
             />
             <Pie
               data={chartData}
-              dataKey="count"
+              dataKey="tokens"
               nameKey="provider"
               innerRadius={50}
               outerRadius={80}

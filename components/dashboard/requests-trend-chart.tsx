@@ -14,16 +14,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { TokenTrendItem } from "@/lib/types";
+import type { RequestsTrendItem } from "@/lib/types";
 
-interface TokenTrendChartProps {
-  data: TokenTrendItem[];
+interface RequestsTrendChartProps {
+  data: RequestsTrendItem[];
 }
 
 const chartConfig = {
-  tokens: {
-    label: "Tokens",
-    color: "var(--chart-1)",
+  requests: {
+    label: "Requests",
+    color: "var(--chart-3)",
   },
 } satisfies ChartConfig;
 
@@ -33,35 +33,30 @@ function formatAxisValue(value: number): string {
   return value.toFixed(1);
 }
 
-export function TokenTrendChart({ data }: TokenTrendChartProps) {
-  const chartData = data.map((item) => ({
-    date: item.date,
-    tokens: item.prompt + item.completion,
-  }));
-
+export function RequestsTrendChart({ data }: RequestsTrendChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Token Usage Trend</CardTitle>
-        <CardDescription>Total tokens over time</CardDescription>
+        <CardTitle>Requests Trend</CardTitle>
+        <CardDescription>API requests over time</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+        <ChartContainer config={chartConfig} className="h-[250px] w-full">
           <AreaChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             margin={{ left: 12, right: 12 }}
           >
             <defs>
-              <linearGradient id="fillTokens" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillRequests" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-tokens)"
+                  stopColor="var(--color-requests)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-tokens)"
+                  stopColor="var(--color-requests)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -83,15 +78,15 @@ export function TokenTrendChart({ data }: TokenTrendChartProps) {
               cursor={false}
               content={
                 <ChartTooltipContent
-                  formatter={(value) => [formatAxisValue(Number(value)), "Tokens"]}
+                  formatter={(value) => [formatAxisValue(Number(value)), "Requests"]}
                 />
               }
             />
             <Area
               type="natural"
-              dataKey="tokens"
-              stroke="var(--color-tokens)"
-              fill="url(#fillTokens)"
+              dataKey="requests"
+              stroke="var(--color-requests)"
+              fill="url(#fillRequests)"
               strokeWidth={2}
             />
           </AreaChart>

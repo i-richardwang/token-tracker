@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
           totalRequests: count(),
           totalTokens: sum(logs.totalTokens),
           totalCost: sum(logs.cost),
+          totalLatency: sum(logs.latency),
           avgLatency: avg(logs.latency),
-          promptTokens: sum(logs.promptTokens),
           completionTokens: sum(logs.completionTokens),
         })
         .from(logs)
@@ -50,19 +50,25 @@ export async function GET(request: NextRequest) {
     ]);
 
     const totalRequests = Number(summaryResult[0]?.totalRequests ?? 0);
+    const totalTokens = Number(summaryResult[0]?.totalTokens ?? 0);
+    const totalCost = Number(summaryResult[0]?.totalCost ?? 0);
+    const totalLatency = Number(summaryResult[0]?.totalLatency ?? 0);
+    const completionTokens = Number(summaryResult[0]?.completionTokens ?? 0);
     const successCount = Number(successCountResult[0]?.count ?? 0);
 
     const summary = {
       totalRequests,
-      totalTokens: Number(summaryResult[0]?.totalTokens ?? 0),
-      totalCost: Number(summaryResult[0]?.totalCost ?? 0),
+      totalTokens,
+      totalCost,
+      completionTokens,
       avgLatency: Number(summaryResult[0]?.avgLatency ?? 0),
-      promptTokens: Number(summaryResult[0]?.promptTokens ?? 0),
-      completionTokens: Number(summaryResult[0]?.completionTokens ?? 0),
+      avgTps: totalLatency > 0 ? (completionTokens / totalLatency) * 1000 : 0,
+      avgTokensPerRequest: totalRequests > 0 ? totalTokens / totalRequests : 0,
+      avgCostPerRequest: totalRequests > 0 ? totalCost / totalRequests : 0,
       successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
     };
 
-    const [tokenTrend, costTrend, providerDistribution, modelDistribution, statusDistribution] =
+    const [tokensTrend, costTrend, requestsTrend, byProvider, requestsByModel, tpsByModelRaw] =
       await Promise.all([
         db
           .select({
@@ -85,9 +91,18 @@ export async function GET(request: NextRequest) {
           .orderBy(dateFormat),
         db
           .select({
+            date: dateFormat,
+            requests: count(),
+          })
+          .from(logs)
+          .where(gte(logs.timestamp, startDate))
+          .groupBy(dateFormat)
+          .orderBy(dateFormat),
+        db
+          .select({
             provider: logs.provider,
-            count: count(),
             tokens: sum(logs.totalTokens),
+            cost: sum(logs.cost),
           })
           .from(logs)
           .where(gte(logs.timestamp, startDate))
@@ -95,8 +110,7 @@ export async function GET(request: NextRequest) {
         db
           .select({
             model: logs.model,
-            count: count(),
-            tokens: sum(logs.totalTokens),
+            requests: count(),
           })
           .from(logs)
           .where(gte(logs.timestamp, startDate))
@@ -105,17 +119,28 @@ export async function GET(request: NextRequest) {
           .limit(8),
         db
           .select({
-            status: logs.status,
-            count: count(),
+            model: logs.model,
+            completionTokens: sum(logs.completionTokens),
+            totalLatency: sum(logs.latency),
           })
           .from(logs)
           .where(gte(logs.timestamp, startDate))
-          .groupBy(logs.status),
+          .groupBy(logs.model),
       ]);
+
+    const tpsByModel = tpsByModelRaw
+      .map((m) => {
+        const completionTokens = Number(m.completionTokens ?? 0);
+        const totalLatencyMs = Number(m.totalLatency ?? 0);
+        const tps = totalLatencyMs > 0 ? (completionTokens / totalLatencyMs) * 1000 : 0;
+        return { model: m.model, tps };
+      })
+      .sort((a, b) => b.tps - a.tps)
+      .slice(0, 8);
 
     return NextResponse.json({
       summary,
-      tokenTrend: tokenTrend.map((t) => ({
+      tokensTrend: tokensTrend.map((t) => ({
         date: t.date,
         prompt: Number(t.prompt ?? 0),
         completion: Number(t.completion ?? 0),
@@ -124,20 +149,20 @@ export async function GET(request: NextRequest) {
         date: c.date,
         cost: Number(c.cost ?? 0),
       })),
-      providerDistribution: providerDistribution.map((p) => ({
+      requestsTrend: requestsTrend.map((r) => ({
+        date: r.date,
+        requests: Number(r.requests ?? 0),
+      })),
+      byProvider: byProvider.map((p) => ({
         provider: p.provider,
-        count: Number(p.count),
         tokens: Number(p.tokens ?? 0),
+        cost: Number(p.cost ?? 0),
       })),
-      modelDistribution: modelDistribution.map((m) => ({
+      requestsByModel: requestsByModel.map((m) => ({
         model: m.model,
-        count: Number(m.count),
-        tokens: Number(m.tokens ?? 0),
+        requests: Number(m.requests),
       })),
-      statusDistribution: statusDistribution.map((s) => ({
-        status: s.status,
-        count: Number(s.count),
-      })),
+      tpsByModel,
     });
   } catch (error) {
     console.error("Dashboard API Error:", error);

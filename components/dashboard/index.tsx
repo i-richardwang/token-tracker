@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { StatsCards } from "./stats-cards";
-import { TokenTrendChart } from "./token-trend-chart";
+import { TokensTrendChart } from "./tokens-trend-chart";
 import { CostTrendChart } from "./cost-trend-chart";
-import { ProviderPieChart } from "./provider-pie-chart";
-import { ModelBarChart } from "./model-bar-chart";
-import { StatusPieChart } from "./status-pie-chart";
+import { RequestsTrendChart } from "./requests-trend-chart";
+import { TokensByProviderChart } from "./tokens-by-provider-chart";
+import { CostByProviderChart } from "./cost-by-provider-chart";
+import { RequestsByModelChart } from "./requests-by-model-chart";
+import { TpsByModelChart } from "./tps-by-model-chart";
 import { TimeRangePicker } from "./time-range-picker";
 import type { DashboardData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
@@ -66,16 +68,21 @@ export function Dashboard() {
 
       <StatsCards summary={data.summary} />
 
-      <TokenTrendChart data={data.tokenTrend} />
+      <TokensTrendChart data={data.tokensTrend} />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <CostTrendChart data={data.costTrend} />
-        <ProviderPieChart data={data.providerDistribution} />
+        <TokensByProviderChart data={data.byProvider} />
+        <CostByProviderChart data={data.byProvider} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <ModelBarChart data={data.modelDistribution} />
-        <StatusPieChart data={data.statusDistribution} />
+        <CostTrendChart data={data.costTrend} />
+        <RequestsTrendChart data={data.requestsTrend} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <RequestsByModelChart data={data.requestsByModel} />
+        <TpsByModelChart data={data.tpsByModel} />
       </div>
     </div>
   );
