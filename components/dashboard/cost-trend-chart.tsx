@@ -66,13 +66,13 @@ export function CostTrendChart({ data }: CostTrendChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value: number) => `$${value.toFixed(2)}`}
+              tickFormatter={(value: number) => `$${value.toFixed(1)}`}
             />
             <ChartTooltip
               cursor={false}
               content={
                 <ChartTooltipContent
-                  formatter={(value) => [`$${Number(value).toFixed(4)}`, "Cost"]}
+                  formatter={(value) => [`$${Number(value).toFixed(1)}`, "Cost"]}
                 />
               }
             />

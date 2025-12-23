@@ -59,30 +59,20 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">LLM Token Usage Dashboard</h1>
-          <p className="text-muted-foreground text-sm">
-            Monitor your LLM API usage and costs
-          </p>
-        </div>
+        <h1 className="text-lg font-semibold">Dashboard</h1>
         <TimeRangePicker value={timeRange} onValueChange={setTimeRange} />
       </div>
 
-      {/* Stats Cards */}
       <StatsCards summary={data.summary} />
 
-      {/* Token Trend Chart - Full Width */}
       <TokenTrendChart data={data.tokenTrend} />
 
-      {/* Cost Trend + Provider Distribution */}
       <div className="grid gap-4 md:grid-cols-2">
         <CostTrendChart data={data.costTrend} />
         <ProviderPieChart data={data.providerDistribution} />
       </div>
 
-      {/* Model Bar Chart + Status Pie Chart */}
       <div className="grid gap-4 md:grid-cols-2">
         <ModelBarChart data={data.modelDistribution} />
         <StatusPieChart data={data.statusDistribution} />
