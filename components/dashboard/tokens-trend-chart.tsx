@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
@@ -11,13 +13,20 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import type { TokensTrendItem } from "@/lib/types";
+import {
+  calculateTrend,
+  formatNumber,
+  getTimeRangeLabel,
+} from "@/lib/chart-utils";
 
 interface TokensTrendChartProps {
   data: TokensTrendItem[];
+  timeRange: string;
 }
 
 const chartConfig = {
@@ -27,23 +36,26 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function formatAxisValue(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(1);
-}
+export function TokensTrendChart({ data, timeRange }: TokensTrendChartProps) {
+  const chartData = useMemo(
+    () =>
+      data.map((item) => ({
+        date: item.date,
+        tokens: item.prompt + item.completion,
+      })),
+    [data]
+  );
 
-export function TokensTrendChart({ data }: TokensTrendChartProps) {
-  const chartData = data.map((item) => ({
-    date: item.date,
-    tokens: item.prompt + item.completion,
-  }));
+  const trend = useMemo(
+    () => calculateTrend(chartData.map((d) => d.tokens)),
+    [chartData]
+  );
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Tokens Trend</CardTitle>
-        <CardDescription>Total tokens over time</CardDescription>
+        <CardDescription>Total token usage over time</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -77,15 +89,11 @@ export function TokensTrendChart({ data }: TokensTrendChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={formatAxisValue}
+              tickFormatter={formatNumber}
             />
             <ChartTooltip
               cursor={false}
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [formatAxisValue(Number(value)), "Tokens"]}
-                />
-              }
+              content={<ChartTooltipContent indicator="line" />}
             />
             <Area
               type="natural"
@@ -97,6 +105,24 @@ export function TokensTrendChart({ data }: TokensTrendChartProps) {
           </AreaChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 font-medium leading-none">
+              {trend.isUp ? "Trending up" : "Trending down"} by{" "}
+              {trend.percentage.toFixed(1)}% this period
+              {trend.isUp ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+            </div>
+            <div className="flex items-center gap-2 leading-none text-muted-foreground">
+              {getTimeRangeLabel(timeRange)}
+            </div>
+          </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 }

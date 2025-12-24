@@ -7,7 +7,7 @@ import { CostTrendChart } from "./cost-trend-chart";
 import { RequestsTrendChart } from "./requests-trend-chart";
 import { TokensByProviderChart } from "./tokens-by-provider-chart";
 import { CostByProviderChart } from "./cost-by-provider-chart";
-import { RequestsByModelChart } from "./requests-by-model-chart";
+import { TokensByModelChart } from "./tokens-by-model-chart";
 import { TpsByModelChart } from "./tps-by-model-chart";
 import { TimeRangePicker } from "./time-range-picker";
 import type { DashboardData } from "@/lib/types";
@@ -68,7 +68,7 @@ export function Dashboard() {
 
       <StatsCards summary={data.summary} />
 
-      <TokensTrendChart data={data.tokensTrend} />
+      <TokensTrendChart data={data.tokensTrend} timeRange={timeRange} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <TokensByProviderChart data={data.byProvider} />
@@ -76,12 +76,12 @@ export function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <CostTrendChart data={data.costTrend} />
-        <RequestsTrendChart data={data.requestsTrend} />
+        <CostTrendChart data={data.costTrend} timeRange={timeRange} />
+        <RequestsTrendChart data={data.requestsTrend} timeRange={timeRange} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <RequestsByModelChart data={data.requestsByModel} />
+        <TokensByModelChart data={data.tokensByModel} />
         <TpsByModelChart data={data.tpsByModel} />
       </div>
     </div>

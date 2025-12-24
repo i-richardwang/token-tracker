@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
@@ -11,13 +13,16 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import type { CostTrendItem } from "@/lib/types";
+import { calculateTrend, getTimeRangeLabel } from "@/lib/chart-utils";
 
 interface CostTrendChartProps {
   data: CostTrendItem[];
+  timeRange: string;
 }
 
 const chartConfig = {
@@ -27,7 +32,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function CostTrendChart({ data }: CostTrendChartProps) {
+export function CostTrendChart({ data, timeRange }: CostTrendChartProps) {
+  const trend = useMemo(
+    () => calculateTrend(data.map((d) => d.cost)),
+    [data]
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -70,11 +80,7 @@ export function CostTrendChart({ data }: CostTrendChartProps) {
             />
             <ChartTooltip
               cursor={false}
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [`$${Number(value).toFixed(1)}`, "Cost"]}
-                />
-              }
+              content={<ChartTooltipContent indicator="line" />}
             />
             <Area
               type="natural"
@@ -86,6 +92,24 @@ export function CostTrendChart({ data }: CostTrendChartProps) {
           </AreaChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 font-medium leading-none">
+              {trend.isUp ? "Trending up" : "Trending down"} by{" "}
+              {trend.percentage.toFixed(1)}% this period
+              {trend.isUp ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+            </div>
+            <div className="flex items-center gap-2 leading-none text-muted-foreground">
+              {getTimeRangeLabel(timeRange)}
+            </div>
+          </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 }

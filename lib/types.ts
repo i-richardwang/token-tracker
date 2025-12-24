@@ -32,9 +32,9 @@ export interface ByProviderItem {
   cost: number;
 }
 
-export interface RequestsByModelItem {
+export interface TokensByModelItem {
   model: string;
-  requests: number;
+  tokens: number;
 }
 
 export interface TpsByModelItem {
@@ -48,6 +48,6 @@ export interface DashboardData {
   costTrend: CostTrendItem[];
   requestsTrend: RequestsTrendItem[];
   byProvider: ByProviderItem[];
-  requestsByModel: RequestsByModelItem[];
+  tokensByModel: TokensByModelItem[];
   tpsByModel: TpsByModelItem[];
 }

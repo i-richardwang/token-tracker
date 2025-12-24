@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
@@ -11,13 +13,20 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import type { RequestsTrendItem } from "@/lib/types";
+import {
+  calculateTrend,
+  formatNumber,
+  getTimeRangeLabel,
+} from "@/lib/chart-utils";
 
 interface RequestsTrendChartProps {
   data: RequestsTrendItem[];
+  timeRange: string;
 }
 
 const chartConfig = {
@@ -27,13 +36,15 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function formatAxisValue(value: number): string {
-  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
-  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
-  return value.toFixed(1);
-}
+export function RequestsTrendChart({
+  data,
+  timeRange,
+}: RequestsTrendChartProps) {
+  const trend = useMemo(
+    () => calculateTrend(data.map((d) => d.requests)),
+    [data]
+  );
 
-export function RequestsTrendChart({ data }: RequestsTrendChartProps) {
   return (
     <Card>
       <CardHeader>
@@ -72,15 +83,11 @@ export function RequestsTrendChart({ data }: RequestsTrendChartProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={formatAxisValue}
+              tickFormatter={formatNumber}
             />
             <ChartTooltip
               cursor={false}
-              content={
-                <ChartTooltipContent
-                  formatter={(value) => [formatAxisValue(Number(value)), "Requests"]}
-                />
-              }
+              content={<ChartTooltipContent indicator="line" />}
             />
             <Area
               type="natural"
@@ -92,6 +99,24 @@ export function RequestsTrendChart({ data }: RequestsTrendChartProps) {
           </AreaChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 font-medium leading-none">
+              {trend.isUp ? "Trending up" : "Trending down"} by{" "}
+              {trend.percentage.toFixed(1)}% this period
+              {trend.isUp ? (
+                <TrendingUp className="h-4 w-4" />
+              ) : (
+                <TrendingDown className="h-4 w-4" />
+              )}
+            </div>
+            <div className="flex items-center gap-2 leading-none text-muted-foreground">
+              {getTimeRangeLabel(timeRange)}
+            </div>
+          </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 }

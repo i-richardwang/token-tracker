@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
     };
 
-    const [tokensTrend, costTrend, requestsTrend, byProvider, requestsByModelRaw, tpsByModelRaw] =
+    const [tokensTrend, costTrend, requestsTrend, byProvider, tokensByModelRaw, tpsByModelRaw] =
       await Promise.all([
         db
           .select({
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
         db
           .select({
             model: logs.model,
-            requests: count(),
+            tokens: sum(logs.totalTokens),
           })
           .from(logs)
           .where(gte(logs.timestamp, startDate))
@@ -127,17 +127,17 @@ export async function GET(request: NextRequest) {
           .groupBy(logs.model),
       ]);
 
-    // Aggregate requests by normalized model name
-    const requestsByModelMap = new Map<string, number>();
-    for (const item of requestsByModelRaw) {
+    // Aggregate tokens by normalized model name
+    const tokensByModelMap = new Map<string, number>();
+    for (const item of tokensByModelRaw) {
       const model = normalizeModelName(item.model);
-      const current = requestsByModelMap.get(model) ?? 0;
-      requestsByModelMap.set(model, current + Number(item.requests));
+      const current = tokensByModelMap.get(model) ?? 0;
+      tokensByModelMap.set(model, current + Number(item.tokens ?? 0));
     }
-    const requestsByModel = Array.from(requestsByModelMap.entries())
-      .map(([model, requests]) => ({ model, requests }))
-      .sort((a, b) => b.requests - a.requests)
-      .slice(0, 8);
+    const tokensByModel = Array.from(tokensByModelMap.entries())
+      .map(([model, tokens]) => ({ model, tokens }))
+      .sort((a, b) => b.tokens - a.tokens)
+      .slice(0, 10);
 
     // Aggregate TPS data by normalized model name
     const tpsByModelMap = new Map<string, { completionTokens: number; totalLatency: number }>();
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
         tps: data.totalLatency > 0 ? (data.completionTokens / data.totalLatency) * 1000 : 0,
       }))
       .sort((a, b) => b.tps - a.tps)
-      .slice(0, 8);
+      .slice(0, 10);
 
     return NextResponse.json({
       summary,
@@ -176,7 +176,7 @@ export async function GET(request: NextRequest) {
         tokens: Number(p.tokens ?? 0),
         cost: Number(p.cost ?? 0),
       })),
-      requestsByModel,
+      tokensByModel,
       tpsByModel,
     });
   } catch (error) {

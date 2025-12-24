@@ -14,6 +14,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -32,8 +33,16 @@ const CHART_COLORS = [
 ] as const;
 
 export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
-  const { chartConfig, chartData } = useMemo(() => {
-    const config: ChartConfig = {};
+  const { chartConfig, chartData, topProvider, topPercentage } = useMemo(() => {
+    const config: ChartConfig = {
+      tokens: {
+        label: "Tokens",
+      },
+    };
+    const totalTokens = data.reduce((sum, item) => sum + item.tokens, 0);
+    const sortedData = [...data].sort((a, b) => b.tokens - a.tokens);
+    const top = sortedData[0];
+
     const processedData = data.map((item, index) => {
       const colorVar = CHART_COLORS[index % CHART_COLORS.length];
       config[item.provider] = {
@@ -45,7 +54,13 @@ export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
         fill: `var(--color-${item.provider})`,
       };
     });
-    return { chartConfig: config, chartData: processedData };
+
+    return {
+      chartConfig: config,
+      chartData: processedData,
+      topProvider: top?.provider ?? "",
+      topPercentage: totalTokens > 0 ? (top?.tokens / totalTokens) * 100 : 0,
+    };
   }, [data]);
 
   return (
@@ -59,7 +74,7 @@ export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={<ChartTooltipContent indicator="dot" hideLabel />}
             />
             <Pie
               data={chartData}
@@ -75,6 +90,18 @@ export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
           </PieChart>
         </ChartContainer>
       </CardContent>
+      <CardFooter>
+        <div className="flex w-full items-start gap-2 text-sm">
+          <div className="grid gap-2">
+            <div className="flex items-center gap-2 font-medium leading-none">
+              {topProvider} leads with {topPercentage.toFixed(1)}% of tokens
+            </div>
+            <div className="flex items-center gap-2 leading-none text-muted-foreground">
+              {data.length} provider{data.length !== 1 ? "s" : ""} in total
+            </div>
+          </div>
+        </div>
+      </CardFooter>
     </Card>
   );
 }
