@@ -48,6 +48,11 @@ export interface TpsByModelItem {
   tps: number;
 }
 
+export interface UsageHeatmapItem {
+  date: string; // YYYY-MM-DD
+  requests: number;
+}
+
 export interface DashboardData {
   summary: DashboardSummary;
   tokensTrend: TokensTrendItem[];
@@ -57,4 +62,5 @@ export interface DashboardData {
   byBrand: ByBrandItem[];
   tokensByModel: TokensByModelItem[];
   tpsByModel: TpsByModelItem[];
+  usageHeatmap: UsageHeatmapItem[];
 }

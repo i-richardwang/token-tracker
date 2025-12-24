@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
     };
 
-    const [tokensTrend, costTrend, requestsTrend, byProvider, byModelRaw, tpsByModelRaw] =
+    const [tokensTrend, costTrend, requestsTrend, byProvider, byModelRaw, tpsByModelRaw, usageHeatmapRaw] =
       await Promise.all([
         db
           .select({
@@ -166,6 +166,16 @@ export async function GET(request: NextRequest) {
           .from(logs)
           .where(dateFilter)
           .groupBy(logs.model),
+        // Heatmap always shows 1 year of data regardless of selected range
+        db
+          .select({
+            date: sql<string>`to_char(${logs.timestamp}, 'YYYY-MM-DD')`,
+            requests: count(),
+          })
+          .from(logs)
+          .where(gte(logs.timestamp, new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)))
+          .groupBy(sql`to_char(${logs.timestamp}, 'YYYY-MM-DD')`)
+          .orderBy(sql`to_char(${logs.timestamp}, 'YYYY-MM-DD')`),
       ]);
 
     // Aggregate tokens by normalized model name
@@ -233,6 +243,10 @@ export async function GET(request: NextRequest) {
       byBrand,
       tokensByModel,
       tpsByModel,
+      usageHeatmap: usageHeatmapRaw.map((h) => ({
+        date: h.date,
+        requests: Number(h.requests ?? 0),
+      })),
     });
   } catch (error) {
     console.error("Dashboard API Error:", error);

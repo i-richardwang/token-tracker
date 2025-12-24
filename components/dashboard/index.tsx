@@ -11,6 +11,7 @@ import { TokensByBrandChart } from "./tokens-by-brand-chart";
 import { CostByBrandChart } from "./cost-by-brand-chart";
 import { TokensByModelChart } from "./tokens-by-model-chart";
 import { TpsByModelChart } from "./tps-by-model-chart";
+import { UsageHeatmapChart } from "./usage-heatmap-chart";
 import { DateRangePicker, type DateRangeValue } from "./date-range-picker";
 import type { DashboardData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
@@ -98,6 +99,8 @@ export function Dashboard() {
         <CostTrendChart data={data.costTrend} timeRange={timeRangeLabel} />
         <RequestsTrendChart data={data.requestsTrend} timeRange={timeRangeLabel} />
       </div>
+
+      <UsageHeatmapChart data={data.usageHeatmap} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <TokensByProviderChart data={data.byProvider} />
