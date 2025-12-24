@@ -1,4 +1,15 @@
 /**
+ * Shared chart color palette
+ */
+export const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+] as const;
+
+/**
  * Calculate trend percentage change between two halves of data
  */
 export function calculateTrend(data: number[]): {
@@ -41,10 +52,34 @@ export function formatNumber(value: number): string {
 }
 
 /**
- * Format cost value with dollar sign
+ * Format cost value with dollar sign (2 decimal places)
  */
 export function formatCost(value: number): string {
   return `$${value.toFixed(2)}`;
+}
+
+/**
+ * Format cost value for chart axis (1 decimal place)
+ */
+export function formatCostAxis(value: number): string {
+  return `$${value.toFixed(1)}`;
+}
+
+/**
+ * Format latency value (ms or s)
+ */
+export function formatLatency(ms: number): string {
+  if (ms >= 1_000) {
+    return `${(ms / 1_000).toFixed(1)}s`;
+  }
+  return `${ms.toFixed(0)}ms`;
+}
+
+/**
+ * Format TPS (tokens per second)
+ */
+export function formatTps(tps: number): string {
+  return `${tps.toFixed(1)}/s`;
 }
 
 /**

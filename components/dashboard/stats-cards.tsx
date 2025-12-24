@@ -3,6 +3,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { DashboardSummary } from "@/lib/types";
 import {
+  formatNumber,
+  formatCost,
+  formatLatency,
+  formatTps,
+} from "@/lib/chart-utils";
+import {
   Activity,
   Zap,
   DollarSign,
@@ -15,25 +21,6 @@ import {
 
 interface StatsCardsProps {
   summary: DashboardSummary;
-}
-
-function formatNumber(num: number): string {
-  if (num >= 1_000_000) return (num / 1_000_000).toFixed(1) + "M";
-  if (num >= 1_000) return (num / 1_000).toFixed(1) + "K";
-  return num.toFixed(1);
-}
-
-function formatCost(num: number): string {
-  return "$" + num.toFixed(2);
-}
-
-function formatLatency(ms: number): string {
-  if (ms >= 1_000) return (ms / 1_000).toFixed(1) + "s";
-  return ms.toFixed(1) + "ms";
-}
-
-function formatTps(tps: number): string {
-  return tps.toFixed(1) + "/s";
 }
 
 export function StatsCards({ summary }: StatsCardsProps) {

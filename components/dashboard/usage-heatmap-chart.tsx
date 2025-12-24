@@ -29,15 +29,15 @@ const CELL_SIZE = 12; // minimum cell size in pixels
 const CELL_GAP = 2; // gap between cells
 const DAY_LABEL_WIDTH = 28; // width reserved for day labels
 
-// Types for week data structure
 interface DayData {
   date: string;
   requests: number;
-  dayOfWeek: number;
 }
 
+type WeekDays = (DayData | null)[];
+
 interface WeekData {
-  days: DayData[];
+  days: WeekDays;
   monthStart: number | null;
 }
 
@@ -93,7 +93,7 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
 
     // Build weeks array with month info
     const weeksData: WeekData[] = [];
-    let currentWeek: DayData[] = [];
+    let currentWeek: WeekDays = Array(7).fill(null);
     let currentMonthStart: number | null = null;
     let lastMonth: number | null = null;
     const current = new Date(adjustedStart);
@@ -104,24 +104,23 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
       const month = current.getMonth();
       const requests = dateMap.get(dateStr) ?? 0;
 
-      // Track month changes (check on Sunday, start of week)
       if (dayOfWeek === 0 && month !== lastMonth) {
         currentMonthStart = month;
         lastMonth = month;
       }
 
-      currentWeek.push({ date: dateStr, requests, dayOfWeek });
+      currentWeek[dayOfWeek] = { date: dateStr, requests };
 
       if (dayOfWeek === 6) {
         weeksData.push({ days: currentWeek, monthStart: currentMonthStart });
-        currentWeek = [];
+        currentWeek = Array(7).fill(null);
         currentMonthStart = null;
       }
 
       current.setDate(current.getDate() + 1);
     }
 
-    if (currentWeek.length > 0) {
+    if (currentWeek.some((d) => d !== null)) {
       weeksData.push({ days: currentWeek, monthStart: currentMonthStart });
     }
 
@@ -201,8 +200,7 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
                 >
                   {weeks.map((week, weekIndex) => (
                     <div key={weekIndex} className="grid gap-0.5" style={{ gridTemplateRows: `repeat(7, minmax(${CELL_SIZE}px, 1fr))` }}>
-                      {DAYS.map((_, dayIndex) => {
-                        const day = week.days.find((d) => d.dayOfWeek === dayIndex);
+                      {week.days.map((day, dayIndex) => {
                         if (!day) {
                           return <div key={dayIndex} className="aspect-square min-w-3 min-h-3" />;
                         }
