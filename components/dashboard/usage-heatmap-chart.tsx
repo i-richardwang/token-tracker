@@ -25,9 +25,26 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 // Grid sizing constants
-const CELL_SIZE = 12; // minimum cell size in pixels
-const CELL_GAP = 2; // gap between cells
-const DAY_LABEL_WIDTH = 28; // width reserved for day labels
+const CELL_SIZE = 12;
+const CELL_GAP = 2;
+const DAY_LABEL_WIDTH = 28;
+
+// Shared grid styles
+const rowGridStyle = {
+  gridTemplateRows: `repeat(7, minmax(${CELL_SIZE}px, 1fr))`,
+  gap: `${CELL_GAP}px`,
+} as const;
+
+// Intensity levels for legend display
+const INTENSITY_LEVELS = [
+  "bg-muted",
+  "bg-chart-1/30",
+  "bg-chart-1/50",
+  "bg-chart-1/75",
+  "bg-chart-1",
+] as const;
+
+const CELL_CLASS = "aspect-square min-w-3 min-h-3 rounded-sm";
 
 interface DayData {
   date: string;
@@ -41,13 +58,28 @@ interface WeekData {
   monthStart: number | null;
 }
 
-function getIntensityClass(value: number, max: number): string {
-  if (max === 0 || value === 0) return "bg-muted";
-  const ratio = value / max;
-  if (ratio < 0.25) return "bg-chart-1/30";
-  if (ratio < 0.5) return "bg-chart-1/50";
-  if (ratio < 0.75) return "bg-chart-1/75";
-  return "bg-chart-1";
+interface Quartiles {
+  q1: number;
+  q2: number;
+  q3: number;
+}
+
+function calculateQuartiles(values: number[]): Quartiles {
+  const sorted = [...values].sort((a, b) => a - b);
+  const len = sorted.length;
+  return {
+    q1: sorted[Math.floor(len * 0.25)] ?? 0,
+    q2: sorted[Math.floor(len * 0.5)] ?? 0,
+    q3: sorted[Math.floor(len * 0.75)] ?? 0,
+  };
+}
+
+function getIntensityClass(value: number, quartiles: Quartiles): string {
+  if (value === 0) return INTENSITY_LEVELS[0];
+  if (value <= quartiles.q1) return INTENSITY_LEVELS[1];
+  if (value <= quartiles.q2) return INTENSITY_LEVELS[2];
+  if (value <= quartiles.q3) return INTENSITY_LEVELS[3];
+  return INTENSITY_LEVELS[4];
 }
 
 function formatDate(dateStr: string): string {
@@ -60,25 +92,28 @@ function formatDate(dateStr: string): string {
 }
 
 export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
-  const { weeks, maxRequests, totalRequests, activeDays, mostActiveDate } = useMemo(() => {
+  const { weeks, quartiles, totalRequests, activeDays, mostActiveDate } = useMemo(() => {
     // Build a map of date -> requests and calculate stats in single pass
     const dateMap = new Map<string, number>();
-    let max = 0;
+    const nonZeroValues: number[] = [];
     let total = 0;
-    let active = 0;
     let mostActive = { date: "", requests: 0 };
 
     for (const item of data) {
       dateMap.set(item.date, item.requests);
       total += item.requests;
-      if (item.requests > 0) active++;
-      if (item.requests > max) {
-        max = item.requests;
-        mostActive = { date: item.date, requests: item.requests };
+      if (item.requests > 0) {
+        nonZeroValues.push(item.requests);
+        if (item.requests > mostActive.requests) {
+          mostActive = { date: item.date, requests: item.requests };
+        }
       }
     }
 
-    // Always show 1 year ending at today (like GitHub)
+    // Calculate quartiles from non-zero values
+    const q = calculateQuartiles(nonZeroValues);
+
+    // Always show 1 year ending at today
     const endDate = new Date();
     const startDate = new Date();
     startDate.setFullYear(startDate.getFullYear() - 1);
@@ -126,9 +161,9 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
 
     return {
       weeks: weeksData,
-      maxRequests: max,
+      quartiles: q,
       totalRequests: total,
-      activeDays: active,
+      activeDays: nonZeroValues.length,
       mostActiveDate: mostActive,
     };
   }, [data]);
@@ -180,13 +215,13 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
               </div>
 
               {/* Grid */}
-              <div className="flex">
-                {/* Day labels */}
-                <div className="flex flex-col gap-0.5 mr-1">
+              <div className="flex pb-0.5">
+                {/* Day labels - use grid to match cell sizing */}
+                <div className="grid mr-1" style={rowGridStyle}>
                   {DAYS.map((day, i) => (
                     <div
                       key={day}
-                      className="h-3 min-h-3 w-6 text-[10px] text-muted-foreground flex items-center"
+                      className="w-6 text-[10px] text-muted-foreground flex items-center"
                     >
                       {i % 2 === 1 ? day : ""}
                     </div>
@@ -195,20 +230,23 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
 
                 {/* Weeks grid - responsive cells */}
                 <div
-                  className="grid flex-1 gap-0.5"
-                  style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(${CELL_SIZE}px, 1fr))` }}
+                  className="grid flex-1"
+                  style={{
+                    gridTemplateColumns: `repeat(${weeks.length}, minmax(${CELL_SIZE}px, 1fr))`,
+                    gap: `${CELL_GAP}px`,
+                  }}
                 >
                   {weeks.map((week, weekIndex) => (
-                    <div key={weekIndex} className="grid gap-0.5" style={{ gridTemplateRows: `repeat(7, minmax(${CELL_SIZE}px, 1fr))` }}>
+                    <div key={weekIndex} className="grid" style={rowGridStyle}>
                       {week.days.map((day, dayIndex) => {
                         if (!day) {
-                          return <div key={dayIndex} className="aspect-square min-w-3 min-h-3" />;
+                          return <div key={dayIndex} className={CELL_CLASS} />;
                         }
                         return (
                           <Tooltip key={dayIndex}>
                             <TooltipTrigger asChild>
                               <div
-                                className={`aspect-square min-w-3 min-h-3 rounded-sm cursor-pointer transition-colors hover:ring-1 hover:ring-foreground/30 ${getIntensityClass(day.requests, maxRequests)}`}
+                                className={`${CELL_CLASS} cursor-pointer transition-colors hover:ring-1 hover:ring-foreground/30 ${getIntensityClass(day.requests, quartiles)}`}
                               />
                             </TooltipTrigger>
                             <TooltipContent>
@@ -230,11 +268,9 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
           {/* Legend */}
           <div className="flex items-center justify-end gap-1 mt-3">
             <span className="text-[10px] text-muted-foreground mr-1">Less</span>
-            <div className="w-3 h-3 rounded-sm bg-muted" />
-            <div className="w-3 h-3 rounded-sm bg-chart-1/30" />
-            <div className="w-3 h-3 rounded-sm bg-chart-1/50" />
-            <div className="w-3 h-3 rounded-sm bg-chart-1/75" />
-            <div className="w-3 h-3 rounded-sm bg-chart-1" />
+            {INTENSITY_LEVELS.map((className, i) => (
+              <div key={i} className={`w-3 h-3 rounded-sm ${className}`} />
+            ))}
             <span className="text-[10px] text-muted-foreground ml-1">More</span>
           </div>
         </TooltipProvider>
