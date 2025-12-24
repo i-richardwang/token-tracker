@@ -56,6 +56,7 @@ export function getTimeRangeLabel(range: string): string {
     "7d": "Last 7 days",
     "30d": "Last 30 days",
     all: "All time",
+    custom: "Selected period",
   };
   return labels[range] ?? labels["7d"];
 }

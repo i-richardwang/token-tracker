@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { StatsCards } from "./stats-cards";
 import { TokensTrendChart } from "./tokens-trend-chart";
 import { CostTrendChart } from "./cost-trend-chart";
@@ -9,22 +9,44 @@ import { TokensByProviderChart } from "./tokens-by-provider-chart";
 import { CostByProviderChart } from "./cost-by-provider-chart";
 import { TokensByModelChart } from "./tokens-by-model-chart";
 import { TpsByModelChart } from "./tps-by-model-chart";
-import { TimeRangePicker } from "./time-range-picker";
+import { DateRangePicker, type DateRangeValue } from "./date-range-picker";
 import type { DashboardData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
+function buildApiUrl(dateRange: DateRangeValue): string {
+  if (dateRange.type === "preset") {
+    return `/api/dashboard?range=${dateRange.value}`;
+  }
+  const from = dateRange.from.toISOString();
+  const to = dateRange.to.toISOString();
+  return `/api/dashboard?from=${from}&to=${to}`;
+}
+
+function getTimeRangeLabel(dateRange: DateRangeValue): string {
+  if (dateRange.type === "preset") {
+    return dateRange.value;
+  }
+  return "custom";
+}
+
 export function Dashboard() {
-  const [timeRange, setTimeRange] = useState("7d");
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    type: "preset",
+    value: "7d",
+  });
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const apiUrl = useMemo(() => buildApiUrl(dateRange), [dateRange]);
+  const timeRangeLabel = useMemo(() => getTimeRangeLabel(dateRange), [dateRange]);
 
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/dashboard?range=${timeRange}`);
+        const response = await fetch(apiUrl);
         if (!response.ok) {
           throw new Error("Failed to fetch dashboard data");
         }
@@ -37,7 +59,7 @@ export function Dashboard() {
       }
     }
     fetchData();
-  }, [timeRange]);
+  }, [apiUrl]);
 
   if (loading) {
     return (
@@ -63,12 +85,12 @@ export function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-lg font-semibold">Dashboard</h1>
-        <TimeRangePicker value={timeRange} onValueChange={setTimeRange} />
+        <DateRangePicker value={dateRange} onValueChange={setDateRange} />
       </div>
 
       <StatsCards summary={data.summary} />
 
-      <TokensTrendChart data={data.tokensTrend} timeRange={timeRange} />
+      <TokensTrendChart data={data.tokensTrend} timeRange={timeRangeLabel} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <TokensByProviderChart data={data.byProvider} />
@@ -76,8 +98,8 @@ export function Dashboard() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <CostTrendChart data={data.costTrend} timeRange={timeRange} />
-        <RequestsTrendChart data={data.requestsTrend} timeRange={timeRange} />
+        <CostTrendChart data={data.costTrend} timeRange={timeRangeLabel} />
+        <RequestsTrendChart data={data.requestsTrend} timeRange={timeRangeLabel} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

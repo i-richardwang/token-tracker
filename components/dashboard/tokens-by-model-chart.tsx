@@ -17,7 +17,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { TokensByModelItem } from "@/lib/types";
-import { formatNumber } from "@/lib/chart-utils";
 
 interface TokensByModelChartProps {
   data: TokensByModelItem[];
@@ -81,7 +80,6 @@ export function TokensByModelChart({ data }: TokensByModelChartProps) {
                     const item = payload?.[0]?.payload;
                     return item?.model ?? "";
                   }}
-                  formatter={(value) => formatNumber(Number(value))}
                 />
               }
             />

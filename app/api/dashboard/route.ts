@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { logs } from "@/lib/db/schema";
 import { normalizeModelName } from "@/lib/model-mapping";
-import { sql, gte, eq, and, count, avg, sum } from "drizzle-orm";
+import { sql, gte, lte, eq, and, count, avg, sum } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -12,24 +12,64 @@ const TIME_RANGES: Record<string, number> = {
   "30d": 30 * 24 * 60 * 60 * 1000,
 };
 
-function getStartDate(range: string): Date {
-  if (range === "all") return new Date(0);
-  const ms = TIME_RANGES[range] ?? TIME_RANGES["7d"];
-  return new Date(Date.now() - ms);
+function getDateRange(
+  range: string | null,
+  fromParam: string | null,
+  toParam: string | null
+): { startDate: Date; endDate: Date | null } {
+  if (fromParam && toParam) {
+    return {
+      startDate: new Date(fromParam),
+      endDate: new Date(toParam),
+    };
+  }
+
+  const rangeValue = range || "7d";
+  if (rangeValue === "all") {
+    return { startDate: new Date(0), endDate: null };
+  }
+
+  const ms = TIME_RANGES[rangeValue] ?? TIME_RANGES["7d"];
+  return { startDate: new Date(Date.now() - ms), endDate: null };
 }
 
-function getDateFormat(isShortRange: boolean) {
-  return isShortRange
+function isShortRange(
+  range: string | null,
+  fromParam: string | null,
+  toParam: string | null
+): boolean {
+  if (fromParam && toParam) {
+    const from = new Date(fromParam);
+    const to = new Date(toParam);
+    const diffMs = to.getTime() - from.getTime();
+    return diffMs <= 24 * 60 * 60 * 1000;
+  }
+  return range === "1d";
+}
+
+function getDateFormat(shortRange: boolean) {
+  return shortRange
     ? sql<string>`to_char(${logs.timestamp}, 'HH24:00')`
     : sql<string>`to_char(${logs.timestamp}, 'MM-DD')`;
 }
 
+function getDateFilter(startDate: Date, endDate: Date | null) {
+  if (endDate) {
+    return and(gte(logs.timestamp, startDate), lte(logs.timestamp, endDate));
+  }
+  return gte(logs.timestamp, startDate);
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const range = searchParams.get("range") || "7d";
-  const startDate = getStartDate(range);
-  const isShortRange = range === "1d";
-  const dateFormat = getDateFormat(isShortRange);
+  const range = searchParams.get("range");
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
+
+  const { startDate, endDate } = getDateRange(range, fromParam, toParam);
+  const shortRange = isShortRange(range, fromParam, toParam);
+  const dateFormat = getDateFormat(shortRange);
+  const dateFilter = getDateFilter(startDate, endDate);
 
   try {
     const [summaryResult, successCountResult] = await Promise.all([
@@ -43,11 +83,11 @@ export async function GET(request: NextRequest) {
           completionTokens: sum(logs.completionTokens),
         })
         .from(logs)
-        .where(gte(logs.timestamp, startDate)),
+        .where(dateFilter),
       db
         .select({ count: count() })
         .from(logs)
-        .where(and(gte(logs.timestamp, startDate), eq(logs.status, "success"))),
+        .where(and(dateFilter, eq(logs.status, "success"))),
     ]);
 
     const totalRequests = Number(summaryResult[0]?.totalRequests ?? 0);
@@ -78,7 +118,7 @@ export async function GET(request: NextRequest) {
             completion: sum(logs.completionTokens),
           })
           .from(logs)
-          .where(gte(logs.timestamp, startDate))
+          .where(dateFilter)
           .groupBy(dateFormat)
           .orderBy(dateFormat),
         db
@@ -87,7 +127,7 @@ export async function GET(request: NextRequest) {
             cost: sum(logs.cost),
           })
           .from(logs)
-          .where(gte(logs.timestamp, startDate))
+          .where(dateFilter)
           .groupBy(dateFormat)
           .orderBy(dateFormat),
         db
@@ -96,7 +136,7 @@ export async function GET(request: NextRequest) {
             requests: count(),
           })
           .from(logs)
-          .where(gte(logs.timestamp, startDate))
+          .where(dateFilter)
           .groupBy(dateFormat)
           .orderBy(dateFormat),
         db
@@ -106,7 +146,7 @@ export async function GET(request: NextRequest) {
             cost: sum(logs.cost),
           })
           .from(logs)
-          .where(gte(logs.timestamp, startDate))
+          .where(dateFilter)
           .groupBy(logs.provider),
         db
           .select({
@@ -114,7 +154,7 @@ export async function GET(request: NextRequest) {
             tokens: sum(logs.totalTokens),
           })
           .from(logs)
-          .where(gte(logs.timestamp, startDate))
+          .where(dateFilter)
           .groupBy(logs.model),
         db
           .select({
@@ -123,7 +163,7 @@ export async function GET(request: NextRequest) {
             totalLatency: sum(logs.latency),
           })
           .from(logs)
-          .where(gte(logs.timestamp, startDate))
+          .where(dateFilter)
           .groupBy(logs.model),
       ]);
 
