@@ -18,10 +18,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ByProviderItem } from "@/lib/types";
+import type { ByBrandItem } from "@/lib/types";
 
-interface CostByProviderChartProps {
-  data: ByProviderItem[];
+interface TokensByBrandChartProps {
+  data: ByBrandItem[];
 }
 
 const CHART_COLORS = [
@@ -32,45 +32,45 @@ const CHART_COLORS = [
   "var(--chart-5)",
 ] as const;
 
-export function CostByProviderChart({ data }: CostByProviderChartProps) {
-  const { chartConfig, chartData, topProvider, topPercentage, providerCount } = useMemo(() => {
+export function TokensByBrandChart({ data }: TokensByBrandChartProps) {
+  const { chartConfig, chartData, topBrand, topPercentage, brandCount } = useMemo(() => {
     const config: ChartConfig = {
-      cost: {
-        label: "Cost",
+      tokens: {
+        label: "Tokens",
       },
     };
     // Filter out zero-value items
-    const filteredData = data.filter((item) => item.cost > 0);
-    const totalCost = filteredData.reduce((sum, item) => sum + item.cost, 0);
-    const sortedData = [...filteredData].sort((a, b) => b.cost - a.cost);
+    const filteredData = data.filter((item) => item.tokens > 0);
+    const totalTokens = filteredData.reduce((sum, item) => sum + item.tokens, 0);
+    const sortedData = [...filteredData].sort((a, b) => b.tokens - a.tokens);
     const top = sortedData[0];
 
     const processedData = sortedData.map((item, index) => {
       const colorVar = CHART_COLORS[index % CHART_COLORS.length];
-      config[item.provider] = {
-        label: item.provider,
+      config[item.brand] = {
+        label: item.brand,
         color: colorVar,
       };
       return {
         ...item,
-        fill: `var(--color-${item.provider})`,
+        fill: `var(--color-${item.brand})`,
       };
     });
 
     return {
       chartConfig: config,
       chartData: processedData,
-      topProvider: top?.provider ?? "",
-      topPercentage: totalCost > 0 ? (top?.cost / totalCost) * 100 : 0,
-      providerCount: filteredData.length,
+      topBrand: top?.brand ?? "",
+      topPercentage: totalTokens > 0 ? (top?.tokens / totalTokens) * 100 : 0,
+      brandCount: filteredData.length,
     };
   }, [data]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Cost by Provider</CardTitle>
-        <CardDescription>Cost distribution</CardDescription>
+        <CardTitle>Tokens by Brand</CardTitle>
+        <CardDescription>Token usage by model brand</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
@@ -81,13 +81,13 @@ export function CostByProviderChart({ data }: CostByProviderChartProps) {
             />
             <Pie
               data={chartData}
-              dataKey="cost"
-              nameKey="provider"
+              dataKey="tokens"
+              nameKey="brand"
               innerRadius={50}
               outerRadius={80}
             />
             <ChartLegend
-              content={<ChartLegendContent nameKey="provider" className="flex-wrap" />}
+              content={<ChartLegendContent nameKey="brand" className="flex-wrap" />}
               verticalAlign="bottom"
             />
           </PieChart>
@@ -97,10 +97,10 @@ export function CostByProviderChart({ data }: CostByProviderChartProps) {
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="grid gap-2">
             <div className="flex items-center gap-2 font-medium leading-none">
-              {topProvider} accounts for {topPercentage.toFixed(1)}% of cost
+              {topBrand} leads with {topPercentage.toFixed(1)}% of tokens
             </div>
             <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              {providerCount} provider{providerCount !== 1 ? "s" : ""} in total
+              {brandCount} brand{brandCount !== 1 ? "s" : ""} in total
             </div>
           </div>
         </div>

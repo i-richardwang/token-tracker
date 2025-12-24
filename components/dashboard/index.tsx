@@ -7,6 +7,8 @@ import { CostTrendChart } from "./cost-trend-chart";
 import { RequestsTrendChart } from "./requests-trend-chart";
 import { TokensByProviderChart } from "./tokens-by-provider-chart";
 import { CostByProviderChart } from "./cost-by-provider-chart";
+import { TokensByBrandChart } from "./tokens-by-brand-chart";
+import { CostByBrandChart } from "./cost-by-brand-chart";
 import { TokensByModelChart } from "./tokens-by-model-chart";
 import { TpsByModelChart } from "./tps-by-model-chart";
 import { DateRangePicker, type DateRangeValue } from "./date-range-picker";
@@ -93,13 +95,18 @@ export function Dashboard() {
       <TokensTrendChart data={data.tokensTrend} timeRange={timeRangeLabel} />
 
       <div className="grid gap-4 md:grid-cols-2">
+        <CostTrendChart data={data.costTrend} timeRange={timeRangeLabel} />
+        <RequestsTrendChart data={data.requestsTrend} timeRange={timeRangeLabel} />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
         <TokensByProviderChart data={data.byProvider} />
         <CostByProviderChart data={data.byProvider} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <CostTrendChart data={data.costTrend} timeRange={timeRangeLabel} />
-        <RequestsTrendChart data={data.requestsTrend} timeRange={timeRangeLabel} />
+        <TokensByBrandChart data={data.byBrand} />
+        <CostByBrandChart data={data.byBrand} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

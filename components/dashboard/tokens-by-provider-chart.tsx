@@ -33,17 +33,19 @@ const CHART_COLORS = [
 ] as const;
 
 export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
-  const { chartConfig, chartData, topProvider, topPercentage } = useMemo(() => {
+  const { chartConfig, chartData, topProvider, topPercentage, providerCount } = useMemo(() => {
     const config: ChartConfig = {
       tokens: {
         label: "Tokens",
       },
     };
-    const totalTokens = data.reduce((sum, item) => sum + item.tokens, 0);
-    const sortedData = [...data].sort((a, b) => b.tokens - a.tokens);
+    // Filter out zero-value items
+    const filteredData = data.filter((item) => item.tokens > 0);
+    const totalTokens = filteredData.reduce((sum, item) => sum + item.tokens, 0);
+    const sortedData = [...filteredData].sort((a, b) => b.tokens - a.tokens);
     const top = sortedData[0];
 
-    const processedData = data.map((item, index) => {
+    const processedData = sortedData.map((item, index) => {
       const colorVar = CHART_COLORS[index % CHART_COLORS.length];
       config[item.provider] = {
         label: item.provider,
@@ -60,6 +62,7 @@ export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
       chartData: processedData,
       topProvider: top?.provider ?? "",
       topPercentage: totalTokens > 0 ? (top?.tokens / totalTokens) * 100 : 0,
+      providerCount: filteredData.length,
     };
   }, [data]);
 
@@ -84,7 +87,7 @@ export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
               outerRadius={80}
             />
             <ChartLegend
-              content={<ChartLegendContent nameKey="provider" />}
+              content={<ChartLegendContent nameKey="provider" className="flex-wrap" />}
               verticalAlign="bottom"
             />
           </PieChart>
@@ -97,7 +100,7 @@ export function TokensByProviderChart({ data }: TokensByProviderChartProps) {
               {topProvider} leads with {topPercentage.toFixed(1)}% of tokens
             </div>
             <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              {data.length} provider{data.length !== 1 ? "s" : ""} in total
+              {providerCount} provider{providerCount !== 1 ? "s" : ""} in total
             </div>
           </div>
         </div>

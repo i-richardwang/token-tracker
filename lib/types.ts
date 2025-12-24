@@ -32,6 +32,12 @@ export interface ByProviderItem {
   cost: number;
 }
 
+export interface ByBrandItem {
+  brand: string;
+  tokens: number;
+  cost: number;
+}
+
 export interface TokensByModelItem {
   model: string;
   tokens: number;
@@ -48,6 +54,7 @@ export interface DashboardData {
   costTrend: CostTrendItem[];
   requestsTrend: RequestsTrendItem[];
   byProvider: ByProviderItem[];
+  byBrand: ByBrandItem[];
   tokensByModel: TokensByModelItem[];
   tpsByModel: TpsByModelItem[];
 }

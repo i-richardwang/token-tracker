@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { logs } from "@/lib/db/schema";
-import { normalizeModelName } from "@/lib/model-mapping";
+import { normalizeModelName, getModelBrand } from "@/lib/model-mapping";
 import { sql, gte, lte, eq, and, count, avg, sum } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
       successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
     };
 
-    const [tokensTrend, costTrend, requestsTrend, byProvider, tokensByModelRaw, tpsByModelRaw] =
+    const [tokensTrend, costTrend, requestsTrend, byProvider, byModelRaw, tpsByModelRaw] =
       await Promise.all([
         db
           .select({
@@ -152,6 +152,7 @@ export async function GET(request: NextRequest) {
           .select({
             model: logs.model,
             tokens: sum(logs.totalTokens),
+            cost: sum(logs.cost),
           })
           .from(logs)
           .where(dateFilter)
@@ -169,7 +170,7 @@ export async function GET(request: NextRequest) {
 
     // Aggregate tokens by normalized model name
     const tokensByModelMap = new Map<string, number>();
-    for (const item of tokensByModelRaw) {
+    for (const item of byModelRaw) {
       const model = normalizeModelName(item.model);
       const current = tokensByModelMap.get(model) ?? 0;
       tokensByModelMap.set(model, current + Number(item.tokens ?? 0));
@@ -178,6 +179,19 @@ export async function GET(request: NextRequest) {
       .map(([model, tokens]) => ({ model, tokens }))
       .sort((a, b) => b.tokens - a.tokens)
       .slice(0, 10);
+
+    // Aggregate by brand
+    const byBrandMap = new Map<string, { tokens: number; cost: number }>();
+    for (const item of byModelRaw) {
+      const brand = getModelBrand(item.model);
+      const current = byBrandMap.get(brand) ?? { tokens: 0, cost: 0 };
+      current.tokens += Number(item.tokens ?? 0);
+      current.cost += Number(item.cost ?? 0);
+      byBrandMap.set(brand, current);
+    }
+    const byBrand = Array.from(byBrandMap.entries())
+      .map(([brand, data]) => ({ brand, tokens: data.tokens, cost: data.cost }))
+      .sort((a, b) => b.tokens - a.tokens);
 
     // Aggregate TPS data by normalized model name
     const tpsByModelMap = new Map<string, { completionTokens: number; totalLatency: number }>();
@@ -216,6 +230,7 @@ export async function GET(request: NextRequest) {
         tokens: Number(p.tokens ?? 0),
         cost: Number(p.cost ?? 0),
       })),
+      byBrand,
       tokensByModel,
       tpsByModel,
     });
