@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LLM Token Tracker",
-  description: "Monitor your LLM API usage and costs",
+  title: "LLMeter",
+  description: "Monitor your LLM API token usage and costs",
 };
 
 export default function RootLayout({

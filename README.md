@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LLMeter
+
+A modern dashboard for monitoring LLM API token usage and costs.
+
+## Features
+
+- **Real-time Monitoring** - Track token usage, costs, and request metrics
+- **Multi-provider Support** - Monitor OpenAI, Anthropic, and other LLM providers
+- **Time Range Analysis** - View data by 1 day, 7 days, 30 days, or all time
+- **Visual Analytics** - Interactive charts for trends and distributions
+- **Model Comparison** - Compare performance (TPS) and usage across models
+
+## Tech Stack
+
+- **Framework**: Next.js 16 + React 19
+- **Language**: TypeScript
+- **Database**: PostgreSQL + Drizzle ORM
+- **Charts**: Recharts
+- **UI**: Tailwind CSS 4 + shadcn/ui
+
+## Data Source
+
+This dashboard reads data from [Bifrost](https://github.com/maximhq/bifrost) LLM Gateway's database. If you're using a different LLM gateway or API proxy, you'll need to adapt the database schema and queries accordingly.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your database URL
+
+# Run development server
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL=postgresql://user:password@localhost:5432/llmeter
+```
 
-## Learn More
+## Dashboard Overview
 
-To learn more about Next.js, take a look at the following resources:
+| Metric | Description |
+|--------|-------------|
+| Total Requests | Number of API calls |
+| Total Tokens | Prompt + Completion tokens |
+| Total Cost | Cumulative cost in USD |
+| Success Rate | Percentage of successful requests |
+| Avg TPS | Average tokens per second |
+| Avg Latency | Average response time |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
