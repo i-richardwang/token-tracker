@@ -100,7 +100,7 @@ export function Dashboard() {
         <RequestsTrendChart data={data.requestsTrend} timeRange={timeRangeLabel} />
       </div>
 
-      <UsageHeatmapChart data={data.usageHeatmap} />
+      <UsageHeatmapChart data={data.heatmap} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <TokensByProviderChart data={data.byProvider} />

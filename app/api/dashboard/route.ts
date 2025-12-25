@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       byProviderRaw,
       byModelRaw,
       tpsByModelRaw,
-      usageHeatmapRaw,
+      heatmapRaw,
     ] = await Promise.all([
       db
         .select({
@@ -240,11 +240,11 @@ export async function GET(request: NextRequest) {
         .from(logs)
         .where(dateFilter)
         .groupBy(logs.model),
-      // Heatmap always shows 1 year of data regardless of selected range
       db
         .select({
           date: sql<string>`to_char(${logs.timestamp}, 'YYYY-MM-DD')`,
           requests: count(),
+          tokens: sum(logs.totalTokens),
         })
         .from(logs)
         .where(gte(logs.timestamp, new Date(Date.now() - ONE_YEAR_MS)))
@@ -261,7 +261,12 @@ export async function GET(request: NextRequest) {
     const byProvider = z.array(DbByProviderRowSchema).parse(byProviderRaw);
     const byModel = z.array(DbByModelRowSchema).parse(byModelRaw);
     const tpsByModelData = z.array(DbTpsRowSchema).parse(tpsByModelRaw);
-    const usageHeatmap = z.array(DbHeatmapRowSchema).parse(usageHeatmapRaw);
+    const heatmapData = z.array(DbHeatmapRowSchema).parse(heatmapRaw);
+
+    const heatmap = {
+      requests: heatmapData.map((d) => ({ date: d.date, value: d.requests })),
+      tokens: heatmapData.map((d) => ({ date: d.date, value: d.tokens })),
+    };
 
     // 6. Aggregate tokens by normalized model name
     const tokensByModelMap = new Map<string, number>();
@@ -324,14 +329,13 @@ export async function GET(request: NextRequest) {
       byBrand,
       tokensByModel,
       tpsByModel,
-      usageHeatmap,
+      heatmap,
     };
 
     return NextResponse.json(response);
   } catch (error) {
     console.error("Dashboard API Error:", error);
 
-    // Handle Zod parsing errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         {

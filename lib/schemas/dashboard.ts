@@ -120,13 +120,21 @@ export const TpsByModelItemSchema = z.object({
 });
 
 /**
- * Usage heatmap data item schema
+ * Generic heatmap data item schema
  */
-export const UsageHeatmapItemSchema = z.object({
+export const HeatmapItemSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
     error: "Date must be in YYYY-MM-DD format",
   }),
-  requests: z.number().int().nonnegative(),
+  value: z.number().nonnegative(),
+});
+
+/**
+ * Heatmap data schema containing both requests and tokens
+ */
+export const HeatmapDataSchema = z.object({
+  requests: z.array(HeatmapItemSchema),
+  tokens: z.array(HeatmapItemSchema),
 });
 
 /**
@@ -141,7 +149,7 @@ export const DashboardDataSchema = z.object({
   byBrand: z.array(ByBrandItemSchema),
   tokensByModel: z.array(TokensByModelItemSchema),
   tpsByModel: z.array(TpsByModelItemSchema),
-  usageHeatmap: z.array(UsageHeatmapItemSchema),
+  heatmap: HeatmapDataSchema,
 });
 
 /**
@@ -231,11 +239,12 @@ export const DbTpsRowSchema = z.object({
 });
 
 /**
- * Heatmap database row schema
+ * Heatmap database row schema (combined requests and tokens)
  */
 export const DbHeatmapRowSchema = z.object({
   date: z.string(),
   requests: DbIntSchema,
+  tokens: DbIntSchema,
 });
 
 /**

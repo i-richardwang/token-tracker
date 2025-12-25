@@ -8,7 +8,8 @@ import {
   ByBrandItemSchema,
   TokensByModelItemSchema,
   TpsByModelItemSchema,
-  UsageHeatmapItemSchema,
+  HeatmapItemSchema,
+  HeatmapDataSchema,
   DashboardDataSchema,
   DashboardQuerySchema,
   TimeRangeEnum,
@@ -49,8 +50,11 @@ export type TokensByModelItem = z.infer<typeof TokensByModelItemSchema>;
 /** TPS by model data item type */
 export type TpsByModelItem = z.infer<typeof TpsByModelItemSchema>;
 
-/** Usage heatmap data item type */
-export type UsageHeatmapItem = z.infer<typeof UsageHeatmapItemSchema>;
+/** Heatmap data item type */
+export type HeatmapItem = z.infer<typeof HeatmapItemSchema>;
+
+/** Heatmap data type (requests + tokens) */
+export type HeatmapData = z.infer<typeof HeatmapDataSchema>;
 
 /** Complete dashboard response data type */
 export type DashboardData = z.infer<typeof DashboardDataSchema>;
