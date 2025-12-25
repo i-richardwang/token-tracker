@@ -1,66 +1,59 @@
-export interface DashboardSummary {
-  totalRequests: number;
-  totalTokens: number;
-  totalCost: number;
-  completionTokens: number;
-  avgLatency: number;
-  avgTps: number;
-  avgTokensPerRequest: number;
-  avgCostPerRequest: number;
-  successRate: number;
-}
+import { z } from "zod";
+import {
+  DashboardSummarySchema,
+  TokensTrendItemSchema,
+  CostTrendItemSchema,
+  RequestsTrendItemSchema,
+  ByProviderItemSchema,
+  ByBrandItemSchema,
+  TokensByModelItemSchema,
+  TpsByModelItemSchema,
+  UsageHeatmapItemSchema,
+  DashboardDataSchema,
+  DashboardQuerySchema,
+  TimeRangeEnum,
+  ApiErrorSchema,
+} from "./schemas/dashboard";
 
-export interface TokensTrendItem {
-  date: string;
-  prompt: number;
-  completion: number;
-}
+// ============================================
+// Types inferred from Schemas (Single Source of Truth)
+// ============================================
 
-export interface CostTrendItem {
-  date: string;
-  cost: number;
-}
+/** Time range preset type */
+export type TimeRange = z.infer<typeof TimeRangeEnum>;
 
-export interface RequestsTrendItem {
-  date: string;
-  requests: number;
-}
+/** Dashboard API query parameters type */
+export type DashboardQuery = z.infer<typeof DashboardQuerySchema>;
 
-export interface ByProviderItem {
-  provider: string;
-  tokens: number;
-  cost: number;
-}
+/** Dashboard summary statistics type */
+export type DashboardSummary = z.infer<typeof DashboardSummarySchema>;
 
-export interface ByBrandItem {
-  brand: string;
-  tokens: number;
-  cost: number;
-}
+/** Tokens trend data item type */
+export type TokensTrendItem = z.infer<typeof TokensTrendItemSchema>;
 
-export interface TokensByModelItem {
-  model: string;
-  tokens: number;
-}
+/** Cost trend data item type */
+export type CostTrendItem = z.infer<typeof CostTrendItemSchema>;
 
-export interface TpsByModelItem {
-  model: string;
-  tps: number;
-}
+/** Requests trend data item type */
+export type RequestsTrendItem = z.infer<typeof RequestsTrendItemSchema>;
 
-export interface UsageHeatmapItem {
-  date: string; // YYYY-MM-DD
-  requests: number;
-}
+/** By provider data item type */
+export type ByProviderItem = z.infer<typeof ByProviderItemSchema>;
 
-export interface DashboardData {
-  summary: DashboardSummary;
-  tokensTrend: TokensTrendItem[];
-  costTrend: CostTrendItem[];
-  requestsTrend: RequestsTrendItem[];
-  byProvider: ByProviderItem[];
-  byBrand: ByBrandItem[];
-  tokensByModel: TokensByModelItem[];
-  tpsByModel: TpsByModelItem[];
-  usageHeatmap: UsageHeatmapItem[];
-}
+/** By brand data item type */
+export type ByBrandItem = z.infer<typeof ByBrandItemSchema>;
+
+/** Tokens by model data item type */
+export type TokensByModelItem = z.infer<typeof TokensByModelItemSchema>;
+
+/** TPS by model data item type */
+export type TpsByModelItem = z.infer<typeof TpsByModelItemSchema>;
+
+/** Usage heatmap data item type */
+export type UsageHeatmapItem = z.infer<typeof UsageHeatmapItemSchema>;
+
+/** Complete dashboard response data type */
+export type DashboardData = z.infer<typeof DashboardDataSchema>;
+
+/** API error response type */
+export type ApiError = z.infer<typeof ApiErrorSchema>;

@@ -1,10 +1,27 @@
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { logs } from "@/lib/db/schema";
 import { normalizeModelName, getModelBrand } from "@/lib/model-mapping";
+import {
+  DashboardQuerySchema,
+  DbTokensTrendRowSchema,
+  DbCostTrendRowSchema,
+  DbRequestsTrendRowSchema,
+  DbByProviderRowSchema,
+  DbByModelRowSchema,
+  DbTpsRowSchema,
+  DbHeatmapRowSchema,
+  DbSummaryRowSchema,
+} from "@/lib/schemas/dashboard";
+import type { DashboardData, DashboardQuery } from "@/lib/types";
 import { sql, gte, lte, eq, and, count, avg, sum } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
+
+// ============================================
+// Constants
+// ============================================
 
 const TIME_RANGES: Record<string, number> = {
   "1d": 24 * 60 * 60 * 1000,
@@ -12,19 +29,25 @@ const TIME_RANGES: Record<string, number> = {
   "30d": 30 * 24 * 60 * 60 * 1000,
 };
 
-function getDateRange(
-  range: string | null,
-  fromParam: string | null,
-  toParam: string | null
-): { startDate: Date; endDate: Date | null } {
-  if (fromParam && toParam) {
-    return {
-      startDate: new Date(fromParam),
-      endDate: new Date(toParam),
-    };
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+
+// ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Parse query parameters and calculate date range
+ */
+function getDateRange(query: DashboardQuery): {
+  startDate: Date;
+  endDate: Date | null;
+} {
+  if (query.from && query.to) {
+    return { startDate: query.from, endDate: query.to };
   }
 
-  const rangeValue = range || "7d";
+  const rangeValue = query.range || "7d";
   if (rangeValue === "all") {
     return { startDate: new Date(0), endDate: null };
   }
@@ -33,26 +56,29 @@ function getDateRange(
   return { startDate: new Date(Date.now() - ms), endDate: null };
 }
 
-function isShortRange(
-  range: string | null,
-  fromParam: string | null,
-  toParam: string | null
-): boolean {
-  if (fromParam && toParam) {
-    const from = new Date(fromParam);
-    const to = new Date(toParam);
-    const diffMs = to.getTime() - from.getTime();
-    return diffMs <= 24 * 60 * 60 * 1000;
+/**
+ * Determine if the range is short (for deciding date grouping format)
+ */
+function isShortRange(query: DashboardQuery): boolean {
+  if (query.from && query.to) {
+    const diffMs = query.to.getTime() - query.from.getTime();
+    return diffMs <= ONE_DAY_MS;
   }
-  return range === "1d";
+  return query.range === "1d";
 }
 
+/**
+ * Get date formatting SQL expression
+ */
 function getDateFormat(shortRange: boolean) {
   return shortRange
     ? sql<string>`to_char(${logs.timestamp}, 'HH24:00')`
     : sql<string>`to_char(${logs.timestamp}, 'MM-DD')`;
 }
 
+/**
+ * Build date filter condition
+ */
 function getDateFilter(startDate: Date, endDate: Date | null) {
   if (endDate) {
     return and(gte(logs.timestamp, startDate), lte(logs.timestamp, endDate));
@@ -60,18 +86,47 @@ function getDateFilter(startDate: Date, endDate: Date | null) {
   return gte(logs.timestamp, startDate);
 }
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const range = searchParams.get("range");
-  const fromParam = searchParams.get("from");
-  const toParam = searchParams.get("to");
+/**
+ * Format Zod validation error for API response
+ */
+function formatZodError(error: z.ZodError) {
+  return {
+    error: "Invalid request parameters",
+    details: error.issues.map((issue) => ({
+      path: issue.path,
+      message: issue.message,
+    })),
+  };
+}
 
-  const { startDate, endDate } = getDateRange(range, fromParam, toParam);
-  const shortRange = isShortRange(range, fromParam, toParam);
+// ============================================
+// Main Handler
+// ============================================
+
+export async function GET(request: NextRequest) {
+  // 1. Extract and validate request parameters
+  const searchParams = request.nextUrl.searchParams;
+  const rawParams = {
+    range: searchParams.get("range") ?? undefined,
+    from: searchParams.get("from") ?? undefined,
+    to: searchParams.get("to") ?? undefined,
+  };
+
+  const parseResult = DashboardQuerySchema.safeParse(rawParams);
+  if (!parseResult.success) {
+    return NextResponse.json(formatZodError(parseResult.error), {
+      status: 400,
+    });
+  }
+
+  const query = parseResult.data;
+  const { startDate, endDate } = getDateRange(query);
+  const shortRange = isShortRange(query);
   const dateFormat = getDateFormat(shortRange);
   const dateFilter = getDateFilter(startDate, endDate);
 
   try {
+    // 2. Execute database queries in parallel
     const [summaryResult, successCountResult] = await Promise.all([
       db
         .select({
@@ -90,166 +145,206 @@ export async function GET(request: NextRequest) {
         .where(and(dateFilter, eq(logs.status, "success"))),
     ]);
 
-    const totalRequests = Number(summaryResult[0]?.totalRequests ?? 0);
-    const totalTokens = Number(summaryResult[0]?.totalTokens ?? 0);
-    const totalCost = Number(summaryResult[0]?.totalCost ?? 0);
-    const totalLatency = Number(summaryResult[0]?.totalLatency ?? 0);
-    const completionTokens = Number(summaryResult[0]?.completionTokens ?? 0);
-    const successCount = Number(successCountResult[0]?.count ?? 0);
+    // 3. Transform summary data using Zod
+    const summaryRow = DbSummaryRowSchema.parse(summaryResult[0] ?? {});
+    const successCount = z
+      .object({ count: z.coerce.number() })
+      .parse(successCountResult[0] ?? { count: 0 }).count;
 
     const summary = {
-      totalRequests,
-      totalTokens,
-      totalCost,
-      completionTokens,
-      avgLatency: Number(summaryResult[0]?.avgLatency ?? 0),
-      avgTps: totalLatency > 0 ? (completionTokens / totalLatency) * 1000 : 0,
-      avgTokensPerRequest: totalRequests > 0 ? totalTokens / totalRequests : 0,
-      avgCostPerRequest: totalRequests > 0 ? totalCost / totalRequests : 0,
-      successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : 0,
+      totalRequests: summaryRow.totalRequests,
+      totalTokens: summaryRow.totalTokens,
+      totalCost: summaryRow.totalCost,
+      completionTokens: summaryRow.completionTokens,
+      avgLatency: summaryRow.avgLatency,
+      avgTps:
+        summaryRow.totalLatency > 0
+          ? (summaryRow.completionTokens / summaryRow.totalLatency) * 1000
+          : 0,
+      avgTokensPerRequest:
+        summaryRow.totalRequests > 0
+          ? summaryRow.totalTokens / summaryRow.totalRequests
+          : 0,
+      avgCostPerRequest:
+        summaryRow.totalRequests > 0
+          ? summaryRow.totalCost / summaryRow.totalRequests
+          : 0,
+      successRate:
+        summaryRow.totalRequests > 0
+          ? (successCount / summaryRow.totalRequests) * 100
+          : 0,
     };
 
-    const [tokensTrend, costTrend, requestsTrend, byProvider, byModelRaw, tpsByModelRaw, usageHeatmapRaw] =
-      await Promise.all([
-        db
-          .select({
-            date: dateFormat,
-            prompt: sum(logs.promptTokens),
-            completion: sum(logs.completionTokens),
-          })
-          .from(logs)
-          .where(dateFilter)
-          .groupBy(dateFormat)
-          .orderBy(dateFormat),
-        db
-          .select({
-            date: dateFormat,
-            cost: sum(logs.cost),
-          })
-          .from(logs)
-          .where(dateFilter)
-          .groupBy(dateFormat)
-          .orderBy(dateFormat),
-        db
-          .select({
-            date: dateFormat,
-            requests: count(),
-          })
-          .from(logs)
-          .where(dateFilter)
-          .groupBy(dateFormat)
-          .orderBy(dateFormat),
-        db
-          .select({
-            provider: logs.provider,
-            tokens: sum(logs.totalTokens),
-            cost: sum(logs.cost),
-          })
-          .from(logs)
-          .where(dateFilter)
-          .groupBy(logs.provider),
-        db
-          .select({
-            model: logs.model,
-            tokens: sum(logs.totalTokens),
-            cost: sum(logs.cost),
-          })
-          .from(logs)
-          .where(dateFilter)
-          .groupBy(logs.model),
-        db
-          .select({
-            model: logs.model,
-            completionTokens: sum(logs.completionTokens),
-            totalLatency: sum(logs.latency),
-          })
-          .from(logs)
-          .where(dateFilter)
-          .groupBy(logs.model),
-        // Heatmap always shows 1 year of data regardless of selected range
-        db
-          .select({
-            date: sql<string>`to_char(${logs.timestamp}, 'YYYY-MM-DD')`,
-            requests: count(),
-          })
-          .from(logs)
-          .where(gte(logs.timestamp, new Date(Date.now() - 365 * 24 * 60 * 60 * 1000)))
-          .groupBy(sql`to_char(${logs.timestamp}, 'YYYY-MM-DD')`)
-          .orderBy(sql`to_char(${logs.timestamp}, 'YYYY-MM-DD')`),
-      ]);
+    // 4. Execute trend and classification queries in parallel
+    const [
+      tokensTrendRaw,
+      costTrendRaw,
+      requestsTrendRaw,
+      byProviderRaw,
+      byModelRaw,
+      tpsByModelRaw,
+      usageHeatmapRaw,
+    ] = await Promise.all([
+      db
+        .select({
+          date: dateFormat,
+          prompt: sum(logs.promptTokens),
+          completion: sum(logs.completionTokens),
+        })
+        .from(logs)
+        .where(dateFilter)
+        .groupBy(dateFormat)
+        .orderBy(dateFormat),
+      db
+        .select({
+          date: dateFormat,
+          cost: sum(logs.cost),
+        })
+        .from(logs)
+        .where(dateFilter)
+        .groupBy(dateFormat)
+        .orderBy(dateFormat),
+      db
+        .select({
+          date: dateFormat,
+          requests: count(),
+        })
+        .from(logs)
+        .where(dateFilter)
+        .groupBy(dateFormat)
+        .orderBy(dateFormat),
+      db
+        .select({
+          provider: logs.provider,
+          tokens: sum(logs.totalTokens),
+          cost: sum(logs.cost),
+        })
+        .from(logs)
+        .where(dateFilter)
+        .groupBy(logs.provider),
+      db
+        .select({
+          model: logs.model,
+          tokens: sum(logs.totalTokens),
+          cost: sum(logs.cost),
+        })
+        .from(logs)
+        .where(dateFilter)
+        .groupBy(logs.model),
+      db
+        .select({
+          model: logs.model,
+          completionTokens: sum(logs.completionTokens),
+          totalLatency: sum(logs.latency),
+        })
+        .from(logs)
+        .where(dateFilter)
+        .groupBy(logs.model),
+      // Heatmap always shows 1 year of data regardless of selected range
+      db
+        .select({
+          date: sql<string>`to_char(${logs.timestamp}, 'YYYY-MM-DD')`,
+          requests: count(),
+        })
+        .from(logs)
+        .where(gte(logs.timestamp, new Date(Date.now() - ONE_YEAR_MS)))
+        .groupBy(sql`to_char(${logs.timestamp}, 'YYYY-MM-DD')`)
+        .orderBy(sql`to_char(${logs.timestamp}, 'YYYY-MM-DD')`),
+    ]);
 
-    // Aggregate tokens by normalized model name
+    // 5. Batch transform database results using Zod
+    const tokensTrend = z.array(DbTokensTrendRowSchema).parse(tokensTrendRaw);
+    const costTrend = z.array(DbCostTrendRowSchema).parse(costTrendRaw);
+    const requestsTrend = z
+      .array(DbRequestsTrendRowSchema)
+      .parse(requestsTrendRaw);
+    const byProvider = z.array(DbByProviderRowSchema).parse(byProviderRaw);
+    const byModel = z.array(DbByModelRowSchema).parse(byModelRaw);
+    const tpsByModelData = z.array(DbTpsRowSchema).parse(tpsByModelRaw);
+    const usageHeatmap = z.array(DbHeatmapRowSchema).parse(usageHeatmapRaw);
+
+    // 6. Aggregate tokens by normalized model name
     const tokensByModelMap = new Map<string, number>();
-    for (const item of byModelRaw) {
+    for (const item of byModel) {
       const model = normalizeModelName(item.model);
       const current = tokensByModelMap.get(model) ?? 0;
-      tokensByModelMap.set(model, current + Number(item.tokens ?? 0));
+      tokensByModelMap.set(model, current + item.tokens);
     }
     const tokensByModel = Array.from(tokensByModelMap.entries())
       .map(([model, tokens]) => ({ model, tokens }))
       .sort((a, b) => b.tokens - a.tokens)
       .slice(0, 10);
 
-    // Aggregate by brand
+    // 7. Aggregate by brand
     const byBrandMap = new Map<string, { tokens: number; cost: number }>();
-    for (const item of byModelRaw) {
+    for (const item of byModel) {
       const brand = getModelBrand(item.model);
       const current = byBrandMap.get(brand) ?? { tokens: 0, cost: 0 };
-      current.tokens += Number(item.tokens ?? 0);
-      current.cost += Number(item.cost ?? 0);
+      current.tokens += item.tokens;
+      current.cost += item.cost;
       byBrandMap.set(brand, current);
     }
     const byBrand = Array.from(byBrandMap.entries())
       .map(([brand, data]) => ({ brand, tokens: data.tokens, cost: data.cost }))
       .sort((a, b) => b.tokens - a.tokens);
 
-    // Aggregate TPS data by normalized model name
-    const tpsByModelMap = new Map<string, { completionTokens: number; totalLatency: number }>();
-    for (const item of tpsByModelRaw) {
+    // 8. Aggregate TPS data by normalized model name
+    const tpsByModelMap = new Map<
+      string,
+      { completionTokens: number; totalLatency: number }
+    >();
+    for (const item of tpsByModelData) {
       const model = normalizeModelName(item.model);
-      const current = tpsByModelMap.get(model) ?? { completionTokens: 0, totalLatency: 0 };
-      current.completionTokens += Number(item.completionTokens ?? 0);
-      current.totalLatency += Number(item.totalLatency ?? 0);
+      const current = tpsByModelMap.get(model) ?? {
+        completionTokens: 0,
+        totalLatency: 0,
+      };
+      current.completionTokens += item.completionTokens;
+      current.totalLatency += item.totalLatency;
       tpsByModelMap.set(model, current);
     }
     const tpsByModel = Array.from(tpsByModelMap.entries())
       .map(([model, data]) => ({
         model,
-        tps: data.totalLatency > 0 ? (data.completionTokens / data.totalLatency) * 1000 : 0,
+        tps:
+          data.totalLatency > 0
+            ? (data.completionTokens / data.totalLatency) * 1000
+            : 0,
       }))
       .sort((a, b) => b.tps - a.tps)
       .slice(0, 10);
 
-    return NextResponse.json({
+    // 9. Build and return response
+    const response: DashboardData = {
       summary,
-      tokensTrend: tokensTrend.map((t) => ({
-        date: t.date,
-        prompt: Number(t.prompt ?? 0),
-        completion: Number(t.completion ?? 0),
-      })),
-      costTrend: costTrend.map((c) => ({
-        date: c.date,
-        cost: Number(c.cost ?? 0),
-      })),
-      requestsTrend: requestsTrend.map((r) => ({
-        date: r.date,
-        requests: Number(r.requests ?? 0),
-      })),
-      byProvider: byProvider.map((p) => ({
-        provider: p.provider,
-        tokens: Number(p.tokens ?? 0),
-        cost: Number(p.cost ?? 0),
-      })),
+      tokensTrend,
+      costTrend,
+      requestsTrend,
+      byProvider,
       byBrand,
       tokensByModel,
       tpsByModel,
-      usageHeatmap: usageHeatmapRaw.map((h) => ({
-        date: h.date,
-        requests: Number(h.requests ?? 0),
-      })),
-    });
+      usageHeatmap,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Dashboard API Error:", error);
+
+    // Handle Zod parsing errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: "Data format error",
+          details: error.issues.map((issue) => ({
+            path: issue.path,
+            message: issue.message,
+          })),
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch dashboard data" },
       { status: 500 }
