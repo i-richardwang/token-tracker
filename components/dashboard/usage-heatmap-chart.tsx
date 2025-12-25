@@ -10,12 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 import type { HeatmapData, HeatmapItem } from "@/lib/types";
 import { formatNumber } from "@/lib/chart-utils";
 
 interface UsageHeatmapChartProps {
-  data: HeatmapData;
+  data?: HeatmapData;
+  loading?: boolean;
 }
 
 type HeatmapMode = "requests" | "tokens";
@@ -132,7 +134,6 @@ function processHeatmapData(data: HeatmapItem[]): ProcessedHeatmap {
 
   const quartiles = calculateQuartiles(nonZeroValues);
 
-  // Show 1 year ending at today, aligned to week boundaries
   const endDate = new Date();
   const startDate = new Date();
   startDate.setFullYear(startDate.getFullYear() - 1);
@@ -199,37 +200,24 @@ const MODE_CONFIG = {
   },
 } as const;
 
-export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
+export function UsageHeatmapChart({ data, loading }: UsageHeatmapChartProps) {
   const [mode, setMode] = useState<HeatmapMode>("requests");
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
+  const isLoading = loading || !data;
+
   const requestsHeatmap = useMemo(
-    () => processHeatmapData(data.requests),
-    [data.requests]
+    () => (data ? processHeatmapData(data.requests) : null),
+    [data]
   );
   const tokensHeatmap = useMemo(
-    () => processHeatmapData(data.tokens),
-    [data.tokens]
+    () => (data ? processHeatmapData(data.tokens) : null),
+    [data]
   );
 
   const activeData = mode === "requests" ? requestsHeatmap : tokensHeatmap;
-  const { weeks, quartiles, total, activeDays, mostActiveDate } = activeData;
   const config = MODE_CONFIG[mode];
-
-  if (weeks.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Activity</CardTitle>
-          <CardDescription>Daily activity heatmap</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">No data available</p>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <Card>
@@ -248,124 +236,135 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0, filter: "blur(4px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, filter: "blur(4px)" }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-          >
-            <div className="overflow-x-auto">
-              <div
-                className="flex flex-col gap-1"
-                style={{
-                  minWidth: `${weeks.length * (CELL_SIZE + CELL_GAP) + 28}px`,
-                }}
-              >
-                <div className="flex">
-                  <div className="w-7 shrink-0" />
-                  <div className="flex-1 relative h-4">
-                    {weeks.map((week, weekIndex) =>
-                      week.monthStart !== null ? (
-                        <span
-                          key={weekIndex}
-                          className="absolute text-[10px] text-muted-foreground whitespace-nowrap"
-                          style={{ left: `${(weekIndex / weeks.length) * 100}%` }}
+        {isLoading || !activeData ? (
+          <Skeleton className="h-[120px] w-full rounded-md" />
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0, filter: "blur(4px)" }}
+              animate={{ opacity: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, filter: "blur(4px)" }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <div className="overflow-x-auto">
+                <div
+                  className="flex flex-col gap-1"
+                  style={{
+                    minWidth: `${activeData.weeks.length * (CELL_SIZE + CELL_GAP) + 28}px`,
+                  }}
+                >
+                  <div className="flex">
+                    <div className="w-7 shrink-0" />
+                    <div className="flex-1 relative h-4">
+                      {activeData.weeks.map((week, weekIndex) =>
+                        week.monthStart !== null ? (
+                          <span
+                            key={weekIndex}
+                            className="absolute text-[10px] text-muted-foreground whitespace-nowrap"
+                            style={{ left: `${(weekIndex / activeData.weeks.length) * 100}%` }}
+                          >
+                            {MONTHS[week.monthStart]}
+                          </span>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
+
+                  <div ref={gridRef} className="flex pb-0.5 pr-0.5">
+                    <div className="grid mr-1" style={rowGridStyle}>
+                      {DAYS.map((day, i) => (
+                        <div
+                          key={day}
+                          className="w-6 text-[10px] text-muted-foreground flex items-center"
                         >
-                          {MONTHS[week.monthStart]}
-                        </span>
-                      ) : null
-                    )}
-                  </div>
-                </div>
+                          {i % 2 === 1 ? day : ""}
+                        </div>
+                      ))}
+                    </div>
 
-                <div ref={gridRef} className="flex pb-0.5 pr-0.5">
-                  <div className="grid mr-1" style={rowGridStyle}>
-                    {DAYS.map((day, i) => (
-                      <div
-                        key={day}
-                        className="w-6 text-[10px] text-muted-foreground flex items-center"
-                      >
-                        {i % 2 === 1 ? day : ""}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div
-                    className="grid flex-1"
-                    style={{
-                      gridTemplateColumns: `repeat(${weeks.length}, minmax(${CELL_SIZE}px, 1fr))`,
-                      gap: `${CELL_GAP}px`,
-                    }}
-                  >
-                    {weeks.map((week, weekIndex) => (
-                      <div key={weekIndex} className="grid" style={rowGridStyle}>
-                        {week.days.map((day, dayIndex) => {
-                          if (!day) {
-                            return <div key={dayIndex} className={CELL_CLASS} />;
-                          }
-                          return (
-                            <div
-                              key={dayIndex}
-                              className={`${CELL_CLASS} cursor-pointer transition-colors hover:ring-1 hover:ring-foreground/30 ${getIntensityClass(day.value, quartiles)}`}
-                              onMouseEnter={(e) => {
-                                const cellRect =
-                                  e.currentTarget.getBoundingClientRect();
-                                const gridRect =
-                                  gridRef.current?.getBoundingClientRect();
-                                if (gridRect) {
-                                  setTooltip({
-                                    day,
-                                    cellRect,
-                                    containerRect: gridRect,
-                                  });
-                                }
-                              }}
-                              onMouseLeave={() => setTooltip(null)}
-                            />
-                          );
-                        })}
-                      </div>
-                    ))}
+                    <div
+                      className="grid flex-1"
+                      style={{
+                        gridTemplateColumns: `repeat(${activeData.weeks.length}, minmax(${CELL_SIZE}px, 1fr))`,
+                        gap: `${CELL_GAP}px`,
+                      }}
+                    >
+                      {activeData.weeks.map((week, weekIndex) => (
+                        <div key={weekIndex} className="grid" style={rowGridStyle}>
+                          {week.days.map((day, dayIndex) => {
+                            if (!day) {
+                              return <div key={dayIndex} className={CELL_CLASS} />;
+                            }
+                            return (
+                              <div
+                                key={dayIndex}
+                                className={`${CELL_CLASS} cursor-pointer transition-colors hover:ring-1 hover:ring-foreground/30 ${getIntensityClass(day.value, activeData.quartiles)}`}
+                                onMouseEnter={(e) => {
+                                  const cellRect =
+                                    e.currentTarget.getBoundingClientRect();
+                                  const gridRect =
+                                    gridRef.current?.getBoundingClientRect();
+                                  if (gridRect) {
+                                    setTooltip({
+                                      day,
+                                      cellRect,
+                                      containerRect: gridRect,
+                                    });
+                                  }
+                                }}
+                                onMouseLeave={() => setTooltip(null)}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center justify-end gap-1 mt-3">
-              <span className="text-[10px] text-muted-foreground mr-1">Less</span>
-              {INTENSITY_LEVELS.map((className, i) => (
-                <div key={i} className={`w-3 h-3 rounded-sm ${className}`} />
-              ))}
-              <span className="text-[10px] text-muted-foreground ml-1">More</span>
-            </div>
-          </motion.div>
-        </AnimatePresence>
+              <div className="flex items-center justify-end gap-1 mt-3">
+                <span className="text-[10px] text-muted-foreground mr-1">Less</span>
+                {INTENSITY_LEVELS.map((className, i) => (
+                  <div key={i} className={`w-3 h-3 rounded-sm ${className}`} />
+                ))}
+                <span className="text-[10px] text-muted-foreground ml-1">More</span>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        )}
       </CardContent>
       <CardFooter>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={mode}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="flex w-full items-start gap-2 text-sm"
-          >
-            <div className="grid gap-2">
-              <div className="flex items-center gap-2 font-medium leading-none">
-                {config.totalLabel(total, activeDays)}
-              </div>
-              {mostActiveDate.date && (
-                <div className="flex items-center gap-2 leading-none text-muted-foreground">
-                  Most active: {formatDate(mostActiveDate.date)} (
-                  {config.formatValue(mostActiveDate.value)})
+        {isLoading || !activeData ? (
+          <div className="grid gap-2">
+            <Skeleton className="h-4 w-52 rounded-md" />
+            <Skeleton className="h-4 w-40 rounded-md" />
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={mode}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="flex w-full items-start gap-2 text-sm"
+            >
+              <div className="grid gap-2">
+                <div className="flex items-center gap-2 font-medium leading-none">
+                  {config.totalLabel(activeData.total, activeData.activeDays)}
                 </div>
-              )}
-            </div>
-          </motion.div>
-        </AnimatePresence>
+                {activeData.mostActiveDate.date && (
+                  <div className="flex items-center gap-2 leading-none text-muted-foreground">
+                    Most active: {formatDate(activeData.mostActiveDate.date)} (
+                    {config.formatValue(activeData.mostActiveDate.value)})
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        )}
       </CardFooter>
 
       {tooltip &&

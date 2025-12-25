@@ -14,7 +14,6 @@ import {
   PopoverTrigger,
 } from "@/components/animate-ui/components/radix/popover";
 
-// Types
 export type DateRangeValue =
   | { type: "preset"; value: string }
   | { type: "custom"; from: Date; to: Date };
@@ -24,7 +23,6 @@ interface DateRangePickerProps {
   onValueChange: (value: DateRangeValue) => void;
 }
 
-// Constants
 const PRESETS = [
   { value: "1d", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
@@ -32,7 +30,6 @@ const PRESETS = [
   { value: "all", label: "All time" },
 ] as const;
 
-// Helpers
 function formatDisplayValue(value: DateRangeValue): string {
   if (value.type === "preset") {
     return PRESETS.find((p) => p.value === value.value)?.label ?? "Select range";
@@ -40,7 +37,6 @@ function formatDisplayValue(value: DateRangeValue): string {
   return `${format(value.from, "MMM d, yyyy")} - ${format(value.to, "MMM d, yyyy")}`;
 }
 
-// Component
 export function DateRangePicker({ value, onValueChange }: DateRangePickerProps) {
   const [tempRange, setTempRange] = React.useState<DateRange | undefined>();
   const [clickCount, setClickCount] = React.useState(0);
@@ -48,7 +44,6 @@ export function DateRangePicker({ value, onValueChange }: DateRangePickerProps) 
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
-      // Reset state when popover opens
       setClickCount(0);
       setTempRange(
         value.type === "custom" ? { from: value.from, to: value.to } : undefined
@@ -65,7 +60,6 @@ export function DateRangePicker({ value, onValueChange }: DateRangePickerProps) 
     setClickCount(newClickCount);
     setTempRange(range);
 
-    // Submit after second click when both dates are set
     if (newClickCount >= 2 && range?.from && range?.to) {
       onValueChange({ type: "custom", from: range.from, to: range.to });
       closeRef.current?.click();
@@ -83,7 +77,6 @@ export function DateRangePicker({ value, onValueChange }: DateRangePickerProps) 
 
       <PopoverContent className="w-auto p-0" align="end" sideOffset={4}>
         <div className="flex">
-          {/* Presets */}
           <div className="flex flex-col gap-1 border-r p-3">
             <p className="mb-2 text-sm font-medium text-muted-foreground">
               Quick Select
@@ -106,7 +99,6 @@ export function DateRangePicker({ value, onValueChange }: DateRangePickerProps) 
             ))}
           </div>
 
-          {/* Calendar */}
           <div className="p-3">
             <p className="mb-2 text-sm font-medium text-muted-foreground">
               Custom Range
@@ -122,7 +114,6 @@ export function DateRangePicker({ value, onValueChange }: DateRangePickerProps) 
           </div>
         </div>
 
-        {/* Hidden close trigger for programmatic closing */}
         <PopoverClose ref={closeRef} className="hidden" />
       </PopoverContent>
     </Popover>

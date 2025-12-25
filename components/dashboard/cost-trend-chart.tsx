@@ -6,13 +6,14 @@ import { formatCostAxis } from "@/lib/chart-utils";
 import type { CostTrendItem } from "@/lib/types";
 
 interface CostTrendChartProps {
-  data: CostTrendItem[];
-  timeRange: string;
+  data?: CostTrendItem[];
+  timeRange?: string;
+  loading?: boolean;
 }
 
-export function CostTrendChart({ data, timeRange }: CostTrendChartProps) {
+export function CostTrendChart({ data, timeRange, loading }: CostTrendChartProps) {
   const chartData = useMemo(
-    () => data.map((item) => ({ date: item.date, value: item.cost })),
+    () => data?.map((item) => ({ date: item.date, value: item.cost })),
     [data]
   );
 
@@ -23,6 +24,7 @@ export function CostTrendChart({ data, timeRange }: CostTrendChartProps) {
       data={chartData}
       timeRange={timeRange}
       yAxisFormatter={formatCostAxis}
+      loading={loading}
     />
   );
 }

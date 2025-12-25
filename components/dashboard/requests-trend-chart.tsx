@@ -6,13 +6,14 @@ import { formatNumber } from "@/lib/chart-utils";
 import type { RequestsTrendItem } from "@/lib/types";
 
 interface RequestsTrendChartProps {
-  data: RequestsTrendItem[];
-  timeRange: string;
+  data?: RequestsTrendItem[];
+  timeRange?: string;
+  loading?: boolean;
 }
 
-export function RequestsTrendChart({ data, timeRange }: RequestsTrendChartProps) {
+export function RequestsTrendChart({ data, timeRange, loading }: RequestsTrendChartProps) {
   const chartData = useMemo(
-    () => data.map((item) => ({ date: item.date, value: item.requests })),
+    () => data?.map((item) => ({ date: item.date, value: item.requests })),
     [data]
   );
 
@@ -24,6 +25,7 @@ export function RequestsTrendChart({ data, timeRange }: RequestsTrendChartProps)
       timeRange={timeRange}
       color="var(--chart-3)"
       yAxisFormatter={formatNumber}
+      loading={loading}
     />
   );
 }

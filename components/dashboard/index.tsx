@@ -14,7 +14,6 @@ import { TpsByModelChart } from "./tps-by-model-chart";
 import { UsageHeatmapChart } from "./usage-heatmap-chart";
 import { DateRangePicker, type DateRangeValue } from "./date-range-picker";
 import type { DashboardData } from "@/lib/types";
-import { Loader2 } from "lucide-react";
 
 function buildApiUrl(dateRange: DateRangeValue): string {
   if (dateRange.type === "preset") {
@@ -64,24 +63,18 @@ export function Dashboard() {
     fetchData();
   }, [apiUrl]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-destructive">{error}</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold">Dashboard</h1>
+          <DateRangePicker value={dateRange} onValueChange={setDateRange} />
+        </div>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p className="text-destructive">{error}</p>
+        </div>
       </div>
     );
-  }
-
-  if (!data) {
-    return null;
   }
 
   return (
@@ -91,30 +84,42 @@ export function Dashboard() {
         <DateRangePicker value={dateRange} onValueChange={setDateRange} />
       </div>
 
-      <StatsCards summary={data.summary} />
+      <StatsCards summary={data?.summary} loading={loading} />
 
-      <TokensTrendChart data={data.tokensTrend} timeRange={timeRangeLabel} />
+      <TokensTrendChart
+        data={data?.tokensTrend}
+        timeRange={timeRangeLabel}
+        loading={loading}
+      />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <CostTrendChart data={data.costTrend} timeRange={timeRangeLabel} />
-        <RequestsTrendChart data={data.requestsTrend} timeRange={timeRangeLabel} />
+        <CostTrendChart
+          data={data?.costTrend}
+          timeRange={timeRangeLabel}
+          loading={loading}
+        />
+        <RequestsTrendChart
+          data={data?.requestsTrend}
+          timeRange={timeRangeLabel}
+          loading={loading}
+        />
       </div>
 
-      <UsageHeatmapChart data={data.heatmap} />
+      <UsageHeatmapChart data={data?.heatmap} loading={loading} />
 
       <div className="grid gap-4 md:grid-cols-2">
-        <TokensByProviderChart data={data.byProvider} />
-        <CostByProviderChart data={data.byProvider} />
+        <TokensByProviderChart data={data?.byProvider} loading={loading} />
+        <CostByProviderChart data={data?.byProvider} loading={loading} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <TokensByBrandChart data={data.byBrand} />
-        <CostByBrandChart data={data.byBrand} />
+        <TokensByBrandChart data={data?.byBrand} loading={loading} />
+        <CostByBrandChart data={data?.byBrand} loading={loading} />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <TokensByModelChart data={data.tokensByModel} />
-        <TpsByModelChart data={data.tpsByModel} />
+        <TokensByModelChart data={data?.tokensByModel} loading={loading} />
+        <TpsByModelChart data={data?.tpsByModel} loading={loading} />
       </div>
     </div>
   );

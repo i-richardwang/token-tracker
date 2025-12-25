@@ -5,12 +5,13 @@ import { PieChartCard } from "./pie-chart-card";
 import type { ByBrandItem } from "@/lib/types";
 
 interface TokensByBrandChartProps {
-  data: ByBrandItem[];
+  data?: ByBrandItem[];
+  loading?: boolean;
 }
 
-export function TokensByBrandChart({ data }: TokensByBrandChartProps) {
+export function TokensByBrandChart({ data, loading }: TokensByBrandChartProps) {
   const chartData = useMemo(
-    () => data.map((item) => ({ name: item.brand, value: item.tokens })),
+    () => data?.map((item) => ({ name: item.brand, value: item.tokens })),
     [data]
   );
 
@@ -21,6 +22,7 @@ export function TokensByBrandChart({ data }: TokensByBrandChartProps) {
       data={chartData}
       valueLabel="Tokens"
       categoryLabel="brand"
+      loading={loading}
     />
   );
 }

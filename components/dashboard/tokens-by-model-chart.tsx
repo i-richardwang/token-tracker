@@ -16,10 +16,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { TokensByModelItem } from "@/lib/types";
 
 interface TokensByModelChartProps {
-  data: TokensByModelItem[];
+  data?: TokensByModelItem[];
+  loading?: boolean;
 }
 
 const chartConfig = {
@@ -33,8 +35,14 @@ function truncateModelName(name: string, maxLength = 28): string {
   return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
 }
 
-export function TokensByModelChart({ data }: TokensByModelChartProps) {
-  const { chartData, topModel, topPercentage } = useMemo(() => {
+export function TokensByModelChart({ data, loading }: TokensByModelChartProps) {
+  const isLoading = loading || !data;
+
+  const { chartData, topModel, topPercentage, modelCount } = useMemo(() => {
+    if (!data) {
+      return { chartData: [], topModel: "", topPercentage: 0, modelCount: 0 };
+    }
+
     const totalTokens = data.reduce((sum, item) => sum + item.tokens, 0);
     const top = data[0];
 
@@ -45,6 +53,7 @@ export function TokensByModelChart({ data }: TokensByModelChartProps) {
       })),
       topModel: top?.model ?? "",
       topPercentage: totalTokens > 0 ? (top?.tokens / totalTokens) * 100 : 0,
+      modelCount: data.length,
     };
   }, [data]);
 
@@ -55,47 +64,60 @@ export function TokensByModelChart({ data }: TokensByModelChartProps) {
         <CardDescription>Top models by token usage</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-[250px] w-full">
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            layout="vertical"
-            margin={{ left: -20 }}
-          >
-            <XAxis type="number" hide />
-            <YAxis
-              type="category"
-              dataKey="shortModel"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={10}
-              width={160}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={
-                <ChartTooltipContent
-                  indicator="line"
-                  labelFormatter={(_, payload) => {
-                    const item = payload?.[0]?.payload;
-                    return item?.model ?? "";
-                  }}
-                />
-              }
-            />
-            <Bar dataKey="tokens" fill="var(--color-tokens)" radius={5} />
-          </BarChart>
-        </ChartContainer>
+        {isLoading ? (
+          <Skeleton className="h-[250px] w-full rounded-md" />
+        ) : (
+          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+            <BarChart
+              accessibilityLayer
+              data={chartData}
+              layout="vertical"
+              margin={{ left: -20 }}
+            >
+              <XAxis type="number" hide />
+              <YAxis
+                type="category"
+                dataKey="shortModel"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                width={160}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    indicator="line"
+                    labelFormatter={(_, payload) => {
+                      const item = payload?.[0]?.payload;
+                      return item?.model ?? "";
+                    }}
+                  />
+                }
+              />
+              <Bar dataKey="tokens" fill="var(--color-tokens)" radius={5} />
+            </BarChart>
+          </ChartContainer>
+        )}
       </CardContent>
       <CardFooter>
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              {truncateModelName(topModel, 20)} leads with {topPercentage.toFixed(1)}%
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Showing top {data.length} models
-            </div>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-4 w-48 rounded-md" />
+                <Skeleton className="h-4 w-36 rounded-md" />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 font-medium leading-none">
+                  {truncateModelName(topModel, 20)} leads with {topPercentage.toFixed(1)}%
+                </div>
+                <div className="flex items-center gap-2 leading-none text-muted-foreground">
+                  Showing top {modelCount} models
+                </div>
+              </>
+            )}
           </div>
         </div>
       </CardFooter>

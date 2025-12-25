@@ -5,12 +5,13 @@ import { PieChartCard } from "./pie-chart-card";
 import type { ByProviderItem } from "@/lib/types";
 
 interface CostByProviderChartProps {
-  data: ByProviderItem[];
+  data?: ByProviderItem[];
+  loading?: boolean;
 }
 
-export function CostByProviderChart({ data }: CostByProviderChartProps) {
+export function CostByProviderChart({ data, loading }: CostByProviderChartProps) {
   const chartData = useMemo(
-    () => data.map((item) => ({ name: item.provider, value: item.cost })),
+    () => data?.map((item) => ({ name: item.provider, value: item.cost })),
     [data]
   );
 
@@ -21,6 +22,7 @@ export function CostByProviderChart({ data }: CostByProviderChartProps) {
       data={chartData}
       valueLabel="Cost"
       categoryLabel="provider"
+      loading={loading}
     />
   );
 }

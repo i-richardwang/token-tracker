@@ -5,14 +5,15 @@ import { AreaTrendChart } from "./area-trend-chart";
 import type { TokensTrendItem } from "@/lib/types";
 
 interface TokensTrendChartProps {
-  data: TokensTrendItem[];
-  timeRange: string;
+  data?: TokensTrendItem[];
+  timeRange?: string;
+  loading?: boolean;
 }
 
-export function TokensTrendChart({ data, timeRange }: TokensTrendChartProps) {
+export function TokensTrendChart({ data, timeRange, loading }: TokensTrendChartProps) {
   const chartData = useMemo(
     () =>
-      data.map((item) => ({
+      data?.map((item) => ({
         date: item.date,
         value: item.prompt + item.completion,
       })),
@@ -26,6 +27,7 @@ export function TokensTrendChart({ data, timeRange }: TokensTrendChartProps) {
       data={chartData}
       timeRange={timeRange}
       height={300}
+      loading={loading}
     />
   );
 }
