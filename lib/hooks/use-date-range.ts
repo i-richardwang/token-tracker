@@ -5,7 +5,7 @@ import { useCallback, useMemo } from "react";
 import type { DateRangeValue } from "@/lib/types";
 
 const TIME_RANGE_PRESETS = ["1d", "7d", "30d", "all"] as const;
-const DEFAULT_PRESET = "7d";
+const DEFAULT_PRESET = "30d";
 
 const dateRangeSearchParams = {
   range: parseAsStringLiteral(TIME_RANGE_PRESETS),
