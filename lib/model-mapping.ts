@@ -2,6 +2,7 @@
 const MODEL_ALIASES: Record<string, string> = {
   "zai-glm-4.6": "glm-4.6",
   "gpt-oss-120b": "gpt-oss:120b",
+  "glm-4.7-free": "glm-4.7",
 };
 
 export function normalizeModelName(name: string): string {

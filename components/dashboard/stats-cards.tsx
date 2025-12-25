@@ -35,16 +35,16 @@ interface StatConfig {
 
 const STATS_CONFIG: StatConfig[] = [
   {
-    title: "Total Requests",
-    icon: Activity,
-    getValue: (s) => formatNumber(s.totalRequests),
-    getDescription: () => "API calls made",
-  },
-  {
     title: "Total Tokens",
     icon: Zap,
     getValue: (s) => formatNumber(s.totalTokens),
     getDescription: (s) => `${formatNumber(s.completionTokens)} completion`,
+  },
+  {
+    title: "Total Requests",
+    icon: Activity,
+    getValue: (s) => formatNumber(s.totalRequests),
+    getDescription: () => "API calls made",
   },
   {
     title: "Total Cost",
@@ -65,6 +65,12 @@ const STATS_CONFIG: StatConfig[] = [
     getDescription: () => "Tokens per request",
   },
   {
+    title: "Avg Cost/Req",
+    icon: Receipt,
+    getValue: (s) => formatCost(s.avgCostPerRequest),
+    getDescription: () => "Cost per request",
+  },
+  {
     title: "Avg TPS",
     icon: Gauge,
     getValue: (s) => formatTps(s.avgTps),
@@ -75,12 +81,6 @@ const STATS_CONFIG: StatConfig[] = [
     icon: Clock,
     getValue: (s) => formatLatency(s.avgLatency),
     getDescription: () => "Response time",
-  },
-  {
-    title: "Avg Cost/Req",
-    icon: Receipt,
-    getValue: (s) => formatCost(s.avgCostPerRequest),
-    getDescription: () => "Cost per request",
   },
 ];
 
