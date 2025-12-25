@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef, type CSSProperties } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Card,
   CardContent,
@@ -9,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/animate-ui/components/radix/tabs";
 import type { HeatmapData, HeatmapItem } from "@/lib/types";
 import { formatNumber } from "@/lib/chart-utils";
 
@@ -247,105 +248,124 @@ export function UsageHeatmapChart({ data }: UsageHeatmapChartProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <div
-            className="flex flex-col gap-1"
-            style={{
-              minWidth: `${weeks.length * (CELL_SIZE + CELL_GAP) + 28}px`,
-            }}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0, filter: "blur(4px)" }}
+            animate={{ opacity: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, filter: "blur(4px)" }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <div className="flex">
-              <div className="w-7 shrink-0" />
-              <div className="flex-1 relative h-4">
-                {weeks.map((week, weekIndex) =>
-                  week.monthStart !== null ? (
-                    <span
-                      key={weekIndex}
-                      className="absolute text-[10px] text-muted-foreground whitespace-nowrap"
-                      style={{ left: `${(weekIndex / weeks.length) * 100}%` }}
-                    >
-                      {MONTHS[week.monthStart]}
-                    </span>
-                  ) : null
-                )}
-              </div>
-            </div>
-
-            <div ref={gridRef} className="flex pb-0.5 pr-0.5">
-              <div className="grid mr-1" style={rowGridStyle}>
-                {DAYS.map((day, i) => (
-                  <div
-                    key={day}
-                    className="w-6 text-[10px] text-muted-foreground flex items-center"
-                  >
-                    {i % 2 === 1 ? day : ""}
-                  </div>
-                ))}
-              </div>
-
+            <div className="overflow-x-auto">
               <div
-                className="grid flex-1"
+                className="flex flex-col gap-1"
                 style={{
-                  gridTemplateColumns: `repeat(${weeks.length}, minmax(${CELL_SIZE}px, 1fr))`,
-                  gap: `${CELL_GAP}px`,
+                  minWidth: `${weeks.length * (CELL_SIZE + CELL_GAP) + 28}px`,
                 }}
               >
-                {weeks.map((week, weekIndex) => (
-                  <div key={weekIndex} className="grid" style={rowGridStyle}>
-                    {week.days.map((day, dayIndex) => {
-                      if (!day) {
-                        return <div key={dayIndex} className={CELL_CLASS} />;
-                      }
-                      return (
-                        <div
-                          key={dayIndex}
-                          className={`${CELL_CLASS} cursor-pointer transition-colors hover:ring-1 hover:ring-foreground/30 ${getIntensityClass(day.value, quartiles)}`}
-                          onMouseEnter={(e) => {
-                            const cellRect =
-                              e.currentTarget.getBoundingClientRect();
-                            const gridRect =
-                              gridRef.current?.getBoundingClientRect();
-                            if (gridRect) {
-                              setTooltip({
-                                day,
-                                cellRect,
-                                containerRect: gridRect,
-                              });
-                            }
-                          }}
-                          onMouseLeave={() => setTooltip(null)}
-                        />
-                      );
-                    })}
+                <div className="flex">
+                  <div className="w-7 shrink-0" />
+                  <div className="flex-1 relative h-4">
+                    {weeks.map((week, weekIndex) =>
+                      week.monthStart !== null ? (
+                        <span
+                          key={weekIndex}
+                          className="absolute text-[10px] text-muted-foreground whitespace-nowrap"
+                          style={{ left: `${(weekIndex / weeks.length) * 100}%` }}
+                        >
+                          {MONTHS[week.monthStart]}
+                        </span>
+                      ) : null
+                    )}
                   </div>
-                ))}
+                </div>
+
+                <div ref={gridRef} className="flex pb-0.5 pr-0.5">
+                  <div className="grid mr-1" style={rowGridStyle}>
+                    {DAYS.map((day, i) => (
+                      <div
+                        key={day}
+                        className="w-6 text-[10px] text-muted-foreground flex items-center"
+                      >
+                        {i % 2 === 1 ? day : ""}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div
+                    className="grid flex-1"
+                    style={{
+                      gridTemplateColumns: `repeat(${weeks.length}, minmax(${CELL_SIZE}px, 1fr))`,
+                      gap: `${CELL_GAP}px`,
+                    }}
+                  >
+                    {weeks.map((week, weekIndex) => (
+                      <div key={weekIndex} className="grid" style={rowGridStyle}>
+                        {week.days.map((day, dayIndex) => {
+                          if (!day) {
+                            return <div key={dayIndex} className={CELL_CLASS} />;
+                          }
+                          return (
+                            <div
+                              key={dayIndex}
+                              className={`${CELL_CLASS} cursor-pointer transition-colors hover:ring-1 hover:ring-foreground/30 ${getIntensityClass(day.value, quartiles)}`}
+                              onMouseEnter={(e) => {
+                                const cellRect =
+                                  e.currentTarget.getBoundingClientRect();
+                                const gridRect =
+                                  gridRef.current?.getBoundingClientRect();
+                                if (gridRect) {
+                                  setTooltip({
+                                    day,
+                                    cellRect,
+                                    containerRect: gridRect,
+                                  });
+                                }
+                              }}
+                              onMouseLeave={() => setTooltip(null)}
+                            />
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="flex items-center justify-end gap-1 mt-3">
-          <span className="text-[10px] text-muted-foreground mr-1">Less</span>
-          {INTENSITY_LEVELS.map((className, i) => (
-            <div key={i} className={`w-3 h-3 rounded-sm ${className}`} />
-          ))}
-          <span className="text-[10px] text-muted-foreground ml-1">More</span>
-        </div>
+            <div className="flex items-center justify-end gap-1 mt-3">
+              <span className="text-[10px] text-muted-foreground mr-1">Less</span>
+              {INTENSITY_LEVELS.map((className, i) => (
+                <div key={i} className={`w-3 h-3 rounded-sm ${className}`} />
+              ))}
+              <span className="text-[10px] text-muted-foreground ml-1">More</span>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </CardContent>
       <CardFooter>
-        <div className="flex w-full items-start gap-2 text-sm">
-          <div className="grid gap-2">
-            <div className="flex items-center gap-2 font-medium leading-none">
-              {config.totalLabel(total, activeDays)}
-            </div>
-            {mostActiveDate.date && (
-              <div className="flex items-center gap-2 leading-none text-muted-foreground">
-                Most active: {formatDate(mostActiveDate.date)} (
-                {config.formatValue(mostActiveDate.value)})
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={mode}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="flex w-full items-start gap-2 text-sm"
+          >
+            <div className="grid gap-2">
+              <div className="flex items-center gap-2 font-medium leading-none">
+                {config.totalLabel(total, activeDays)}
               </div>
-            )}
-          </div>
-        </div>
+              {mostActiveDate.date && (
+                <div className="flex items-center gap-2 leading-none text-muted-foreground">
+                  Most active: {formatDate(mostActiveDate.date)} (
+                  {config.formatValue(mostActiveDate.value)})
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </CardFooter>
 
       {tooltip &&

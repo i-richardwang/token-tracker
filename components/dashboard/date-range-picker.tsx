@@ -12,7 +12,7 @@ import {
   PopoverClose,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from "@/components/animate-ui/components/radix/popover";
 
 // Types
 export type DateRangeValue =
