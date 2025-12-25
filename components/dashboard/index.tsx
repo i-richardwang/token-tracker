@@ -12,8 +12,9 @@ import { CostByBrandChart } from "./cost-by-brand-chart";
 import { TokensByModelChart } from "./tokens-by-model-chart";
 import { TpsByModelChart } from "./tps-by-model-chart";
 import { UsageHeatmapChart } from "./usage-heatmap-chart";
-import { DateRangePicker, type DateRangeValue } from "./date-range-picker";
-import type { DashboardData } from "@/lib/types";
+import { DateRangePicker } from "./date-range-picker";
+import { useDateRange } from "@/lib/hooks/use-date-range";
+import type { DashboardData, DateRangeValue } from "@/lib/types";
 
 function buildApiUrl(dateRange: DateRangeValue): string {
   if (dateRange.type === "preset") {
@@ -32,10 +33,7 @@ function getTimeRangeLabel(dateRange: DateRangeValue): string {
 }
 
 export function Dashboard() {
-  const [dateRange, setDateRange] = useState<DateRangeValue>({
-    type: "preset",
-    value: "7d",
-  });
+  const [dateRange, setDateRange] = useDateRange();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

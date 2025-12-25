@@ -4,7 +4,6 @@ import * as React from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { type DateRange } from "react-day-picker";
-
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -13,10 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/animate-ui/components/radix/popover";
-
-export type DateRangeValue =
-  | { type: "preset"; value: string }
-  | { type: "custom"; from: Date; to: Date };
+import type { DateRangeValue } from "@/lib/types";
 
 interface DateRangePickerProps {
   value: DateRangeValue;

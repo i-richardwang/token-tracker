@@ -61,3 +61,8 @@ export type DashboardData = z.infer<typeof DashboardDataSchema>;
 
 /** API error response type */
 export type ApiError = z.infer<typeof ApiErrorSchema>;
+
+/** Date range value for dashboard filters */
+export type DateRangeValue =
+  | { type: "preset"; value: string }
+  | { type: "custom"; from: Date; to: Date };
