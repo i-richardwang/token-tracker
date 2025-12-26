@@ -31,6 +31,7 @@ interface PieChartCardProps {
   valueLabel: string;
   categoryLabel: string;
   loading?: boolean;
+  colorOrder?: string[];
 }
 
 export function PieChartCard({
@@ -40,6 +41,7 @@ export function PieChartCard({
   valueLabel,
   categoryLabel,
   loading,
+  colorOrder,
 }: PieChartCardProps) {
   const isLoading = loading || !data;
 
@@ -65,8 +67,20 @@ export function PieChartCard({
     const sortedData = [...filteredData].sort((a, b) => b.value - a.value);
     const top = sortedData[0];
 
-    const processedData = sortedData.map((item, index) => {
-      const colorVar = CHART_COLORS[index % CHART_COLORS.length];
+    const colorIndexMap = new Map<string, number>();
+    if (colorOrder) {
+      colorOrder.forEach((name, index) => {
+        colorIndexMap.set(name, index);
+      });
+    } else {
+      sortedData.forEach((item, index) => {
+        colorIndexMap.set(item.name, index);
+      });
+    }
+
+    const processedData = sortedData.map((item) => {
+      const colorIndex = colorIndexMap.get(item.name) ?? sortedData.length;
+      const colorVar = CHART_COLORS[colorIndex % CHART_COLORS.length];
       config[item.name] = {
         label: item.name,
         color: colorVar,
@@ -84,7 +98,7 @@ export function PieChartCard({
       topPercentage: total > 0 && top ? (top.value / total) * 100 : 0,
       itemCount: filteredData.length,
     };
-  }, [data, valueLabel]);
+  }, [data, valueLabel, colorOrder]);
 
   const isTokens = valueLabel.toLowerCase() === "tokens";
   const footerText = isTokens ? "leads with" : "accounts for";

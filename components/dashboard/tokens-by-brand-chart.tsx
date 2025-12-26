@@ -10,10 +10,14 @@ interface TokensByBrandChartProps {
 }
 
 export function TokensByBrandChart({ data, loading }: TokensByBrandChartProps) {
-  const chartData = useMemo(
-    () => data?.map((item) => ({ name: item.brand, value: item.tokens })),
-    [data]
-  );
+  const { chartData, colorOrder } = useMemo(() => {
+    if (!data) return { chartData: undefined, colorOrder: undefined };
+    const sorted = [...data].sort((a, b) => b.tokens - a.tokens);
+    return {
+      chartData: data.map((item) => ({ name: item.brand, value: item.tokens })),
+      colorOrder: sorted.map((item) => item.brand),
+    };
+  }, [data]);
 
   return (
     <PieChartCard
@@ -23,6 +27,7 @@ export function TokensByBrandChart({ data, loading }: TokensByBrandChartProps) {
       valueLabel="Tokens"
       categoryLabel="brand"
       loading={loading}
+      colorOrder={colorOrder}
     />
   );
 }

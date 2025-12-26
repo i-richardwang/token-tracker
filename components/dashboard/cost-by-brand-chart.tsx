@@ -10,10 +10,14 @@ interface CostByBrandChartProps {
 }
 
 export function CostByBrandChart({ data, loading }: CostByBrandChartProps) {
-  const chartData = useMemo(
-    () => data?.map((item) => ({ name: item.brand, value: item.cost })),
-    [data]
-  );
+  const { chartData, colorOrder } = useMemo(() => {
+    if (!data) return { chartData: undefined, colorOrder: undefined };
+    const sortedByTokens = [...data].sort((a, b) => b.tokens - a.tokens);
+    return {
+      chartData: data.map((item) => ({ name: item.brand, value: item.cost })),
+      colorOrder: sortedByTokens.map((item) => item.brand),
+    };
+  }, [data]);
 
   return (
     <PieChartCard
@@ -23,6 +27,7 @@ export function CostByBrandChart({ data, loading }: CostByBrandChartProps) {
       valueLabel="Cost"
       categoryLabel="brand"
       loading={loading}
+      colorOrder={colorOrder}
     />
   );
 }

@@ -19,6 +19,7 @@ const BRAND_PATTERNS: [RegExp, string][] = [
   [/^deepseek/i, "DeepSeek"],
   [/^gemini/i, "Gemini"],
   [/^(llama|meta-llama)/i, "Llama"],
+  [/^grok/i, "Grok"],
   [/^(mistral|mixtral|codestral|ministral|devstral)/i, "Mistral"],
   [/^(yi-|yi\d)/i, "Yi"],
   [/^(doubao|skylark)/i, "Doubao"],

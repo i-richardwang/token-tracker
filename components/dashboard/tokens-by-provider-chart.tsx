@@ -10,10 +10,14 @@ interface TokensByProviderChartProps {
 }
 
 export function TokensByProviderChart({ data, loading }: TokensByProviderChartProps) {
-  const chartData = useMemo(
-    () => data?.map((item) => ({ name: item.provider, value: item.tokens })),
-    [data]
-  );
+  const { chartData, colorOrder } = useMemo(() => {
+    if (!data) return { chartData: undefined, colorOrder: undefined };
+    const sorted = [...data].sort((a, b) => b.tokens - a.tokens);
+    return {
+      chartData: data.map((item) => ({ name: item.provider, value: item.tokens })),
+      colorOrder: sorted.map((item) => item.provider),
+    };
+  }, [data]);
 
   return (
     <PieChartCard
@@ -23,6 +27,7 @@ export function TokensByProviderChart({ data, loading }: TokensByProviderChartPr
       valueLabel="Tokens"
       categoryLabel="provider"
       loading={loading}
+      colorOrder={colorOrder}
     />
   );
 }
