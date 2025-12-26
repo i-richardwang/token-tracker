@@ -9,6 +9,14 @@ export function normalizeModelName(name: string): string {
   return MODEL_ALIASES[name] ?? name;
 }
 
+const PROVIDER_ALIASES: Record<string, string> = {
+  cloud: "OpenRouter",
+};
+
+export function normalizeProviderName(name: string): string {
+  return PROVIDER_ALIASES[name] ?? name;
+}
+
 // Model prefix patterns -> Brand name
 const BRAND_PATTERNS: [RegExp, string][] = [
   [/^(qwen|qwq)/i, "Qwen"],

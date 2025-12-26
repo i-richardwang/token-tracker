@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { logs } from "@/lib/db/schema";
-import { normalizeModelName, getModelBrand } from "@/lib/model-mapping";
+import { normalizeModelName, normalizeProviderName, getModelBrand } from "@/lib/model-mapping";
 import {
   DashboardQuerySchema,
   DbTokensTrendRowSchema,
@@ -258,7 +258,13 @@ export async function GET(request: NextRequest) {
     const requestsTrend = z
       .array(DbRequestsTrendRowSchema)
       .parse(requestsTrendRaw);
-    const byProvider = z.array(DbByProviderRowSchema).parse(byProviderRaw);
+    const byProvider = z
+      .array(DbByProviderRowSchema)
+      .parse(byProviderRaw)
+      .map((item) => ({
+        ...item,
+        provider: normalizeProviderName(item.provider),
+      }));
     const byModel = z.array(DbByModelRowSchema).parse(byModelRaw);
     const tpsByModelData = z.array(DbTpsRowSchema).parse(tpsByModelRaw);
     const heatmapData = z.array(DbHeatmapRowSchema).parse(heatmapRaw);
