@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
       tokensTrendRaw,
       costTrendRaw,
       requestsTrendRaw,
-      byProviderRaw,
+      byProviderRawData,
       byModelRaw,
       tpsByModelRaw,
       heatmapRaw,
@@ -258,13 +258,18 @@ export async function GET(request: NextRequest) {
     const requestsTrend = z
       .array(DbRequestsTrendRowSchema)
       .parse(requestsTrendRaw);
-    const byProvider = z
-      .array(DbByProviderRowSchema)
-      .parse(byProviderRaw)
-      .map((item) => ({
-        ...item,
-        provider: normalizeProviderName(item.provider),
-      }));
+    const byProviderRaw = z.array(DbByProviderRowSchema).parse(byProviderRawData);
+    const byProviderMap = new Map<string, { tokens: number; cost: number }>();
+    for (const item of byProviderRaw) {
+      const provider = normalizeProviderName(item.provider);
+      const current = byProviderMap.get(provider) ?? { tokens: 0, cost: 0 };
+      current.tokens += item.tokens;
+      current.cost += item.cost;
+      byProviderMap.set(provider, current);
+    }
+    const byProvider = Array.from(byProviderMap.entries()).map(
+      ([provider, data]) => ({ provider, ...data })
+    );
     const byModel = z.array(DbByModelRowSchema).parse(byModelRaw);
     const tpsByModelData = z.array(DbTpsRowSchema).parse(tpsByModelRaw);
     const heatmapData = z.array(DbHeatmapRowSchema).parse(heatmapRaw);

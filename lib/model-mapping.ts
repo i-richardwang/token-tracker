@@ -11,6 +11,7 @@ export function normalizeModelName(name: string): string {
 
 const PROVIDER_ALIASES: Record<string, string> = {
   cloud: "OpenRouter",
+  "opencode-claude": "opencode",
 };
 
 export function normalizeProviderName(name: string): string {
