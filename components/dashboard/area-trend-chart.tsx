@@ -22,6 +22,7 @@ import {
   calculateTrend,
   formatNumber,
   getTimeRangeLabel,
+  formatDateForChart,
 } from "@/lib/chart-utils";
 
 interface AreaTrendChartProps {
@@ -106,6 +107,7 @@ export function AreaTrendChart({
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
+                tickFormatter={formatDateForChart}
               />
               <YAxis
                 tickLine={false}

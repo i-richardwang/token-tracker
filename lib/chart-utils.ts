@@ -95,3 +95,20 @@ export function getTimeRangeLabel(range: string): string {
   };
   return labels[range] ?? labels["7d"];
 }
+
+/**
+ * Format date for chart X-axis display
+ * Converts YYYY-MM-DD to MM-DD, keeps HH:00 format as-is
+ */
+export function formatDateForChart(date: string): string {
+  // If it's an hourly format (HH:00), keep as-is
+  if (/^\d{2}:00$/.test(date)) {
+    return date;
+  }
+  // If it's YYYY-MM-DD format, extract MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date.slice(5); // "2024-01-15" -> "01-15"
+  }
+  // Fallback: return as-is
+  return date;
+}

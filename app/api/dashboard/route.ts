@@ -69,11 +69,12 @@ function isShortRange(query: DashboardQuery): boolean {
 
 /**
  * Get date formatting SQL expression
+ * Uses YYYY-MM-DD for proper cross-year sorting, frontend will format for display
  */
 function getDateFormat(shortRange: boolean) {
   return shortRange
     ? sql<string>`to_char(${logs.timestamp}, 'HH24:00')`
-    : sql<string>`to_char(${logs.timestamp}, 'MM-DD')`;
+    : sql<string>`to_char(${logs.timestamp}, 'YYYY-MM-DD')`;
 }
 
 /**
