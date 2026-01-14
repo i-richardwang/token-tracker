@@ -19,7 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CHART_COLORS } from "@/lib/chart-utils";
+import { CHART_COLORS, formatNumberTooltip } from "@/lib/chart-utils";
 
 interface PieChartCardProps {
   title: string;
@@ -32,6 +32,7 @@ interface PieChartCardProps {
   categoryLabel: string;
   loading?: boolean;
   colorOrder?: string[];
+  valueFormatter?: (value: number) => string;
 }
 
 export function PieChartCard({
@@ -42,6 +43,7 @@ export function PieChartCard({
   categoryLabel,
   loading,
   colorOrder,
+  valueFormatter = formatNumberTooltip,
 }: PieChartCardProps) {
   const isLoading = loading || !data;
 
@@ -117,7 +119,7 @@ export function PieChartCard({
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="dot" hideLabel />}
+                content={<ChartTooltipContent indicator="dot" hideLabel valueFormatter={valueFormatter} />}
               />
               <Pie
                 data={chartData}

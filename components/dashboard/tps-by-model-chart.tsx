@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
@@ -17,6 +17,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatTpsAxis, formatTpsTooltip, truncateModelName } from "@/lib/chart-utils";
 import type { TpsByModelItem } from "@/lib/types";
 
 interface TpsByModelChartProps {
@@ -30,10 +31,6 @@ const chartConfig = {
     color: "var(--chart-2)",
   },
 } satisfies ChartConfig;
-
-function truncateModelName(name: string, maxLength = 28): string {
-  return name.length > maxLength ? `${name.slice(0, maxLength)}...` : name;
-}
 
 export function TpsByModelChart({ data, loading }: TpsByModelChartProps) {
   const isLoading = loading || !data;
@@ -64,23 +61,31 @@ export function TpsByModelChart({ data, loading }: TpsByModelChartProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-[250px] w-full rounded-md" />
+          <Skeleton className="h-[350px] w-full rounded-md" />
         ) : (
-          <ChartContainer config={chartConfig} className="h-[250px] w-full">
+          <ChartContainer config={chartConfig} className="h-[350px] w-full">
             <BarChart
               accessibilityLayer
               data={chartData}
-              layout="vertical"
-              margin={{ left: -20 }}
+              margin={{ left: 12, right: 12 }}
             >
-              <XAxis type="number" hide />
-              <YAxis
-                type="category"
+              <CartesianGrid vertical={false} />
+              <XAxis
                 dataKey="shortModel"
                 tickLine={false}
                 axisLine={false}
-                tickMargin={10}
-                width={160}
+                tickMargin={8}
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                height={120}
+                fontSize={11}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                tickFormatter={formatTpsAxis}
               />
               <ChartTooltip
                 cursor={false}
@@ -91,10 +96,11 @@ export function TpsByModelChart({ data, loading }: TpsByModelChartProps) {
                       const item = payload?.[0]?.payload;
                       return item?.model ?? "";
                     }}
+                    valueFormatter={formatTpsTooltip}
                   />
                 }
               />
-              <Bar dataKey="tps" fill="var(--color-tps)" radius={5} />
+              <Bar dataKey="tps" fill="var(--color-tps)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ChartContainer>
         )}

@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   calculateTrend,
   formatNumber,
+  formatNumberTooltip,
   getTimeRangeLabel,
   formatDateForChart,
 } from "@/lib/chart-utils";
@@ -36,6 +37,7 @@ interface AreaTrendChartProps {
   color?: string;
   height?: number;
   yAxisFormatter?: (value: number) => string;
+  tooltipFormatter?: (value: number) => string;
   gradientId?: string;
   loading?: boolean;
 }
@@ -48,6 +50,7 @@ export function AreaTrendChart({
   color = "var(--chart-1)",
   height = 250,
   yAxisFormatter = formatNumber,
+  tooltipFormatter = formatNumberTooltip,
   gradientId,
   loading,
 }: AreaTrendChartProps) {
@@ -117,7 +120,7 @@ export function AreaTrendChart({
               />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent indicator="line" />}
+                content={<ChartTooltipContent indicator="line" valueFormatter={tooltipFormatter} />}
               />
               <Area
                 type="natural"

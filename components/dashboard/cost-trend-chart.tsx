@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { AreaTrendChart } from "./area-trend-chart";
-import { formatCostAxis } from "@/lib/chart-utils";
+import { formatCostAxis, formatCostTooltip } from "@/lib/chart-utils";
 import type { CostTrendItem } from "@/lib/types";
 
 interface CostTrendChartProps {
@@ -24,6 +24,7 @@ export function CostTrendChart({ data, timeRange, loading }: CostTrendChartProps
       data={chartData}
       timeRange={timeRange}
       yAxisFormatter={formatCostAxis}
+      tooltipFormatter={formatCostAxis}
       loading={loading}
     />
   );

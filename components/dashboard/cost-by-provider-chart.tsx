@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { PieChartCard } from "./pie-chart-card";
+import { formatCostTooltip } from "@/lib/chart-utils";
 import type { ByProviderItem } from "@/lib/types";
 
 interface CostByProviderChartProps {
@@ -28,6 +29,7 @@ export function CostByProviderChart({ data, loading }: CostByProviderChartProps)
       categoryLabel="provider"
       loading={loading}
       colorOrder={colorOrder}
+      valueFormatter={formatCostTooltip}
     />
   );
 }

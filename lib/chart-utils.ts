@@ -43,12 +43,25 @@ export function calculateTrend(data: number[]): {
  */
 export function formatNumber(value: number): string {
   if (value >= 1_000_000) {
+    return `${Math.round(value / 1_000_000)}M`;
+  }
+  if (value >= 1_000) {
+    return `${Math.round(value / 1_000)}K`;
+  }
+  return Math.round(value).toString();
+}
+
+/**
+ * Format large numbers with K/M suffixes (1 decimal place for tooltip)
+ */
+export function formatNumberTooltip(value: number): string {
+  if (value >= 1_000_000) {
     return `${(value / 1_000_000).toFixed(1)}M`;
   }
   if (value >= 1_000) {
     return `${(value / 1_000).toFixed(1)}K`;
   }
-  return value.toFixed(0);
+  return Math.round(value).toString();
 }
 
 /**
@@ -59,9 +72,16 @@ export function formatCost(value: number): string {
 }
 
 /**
- * Format cost value for chart axis (1 decimal place)
+ * Format cost value for chart axis (no decimal places)
  */
 export function formatCostAxis(value: number): string {
+  return `$${Math.round(value)}`;
+}
+
+/**
+ * Format cost value for tooltip (1 decimal place)
+ */
+export function formatCostTooltip(value: number): string {
   return `$${value.toFixed(1)}`;
 }
 
@@ -70,16 +90,37 @@ export function formatCostAxis(value: number): string {
  */
 export function formatLatency(ms: number): string {
   if (ms >= 1_000) {
-    return `${(ms / 1_000).toFixed(1)}s`;
+    return `${Math.round(ms / 1_000)}s`;
   }
-  return `${ms.toFixed(0)}ms`;
+  return `${Math.round(ms)}ms`;
 }
 
 /**
- * Format TPS (tokens per second)
+ * Format TPS (tokens per second) - for display with unit
  */
 export function formatTps(tps: number): string {
   return `${tps.toFixed(1)}/s`;
+}
+
+/**
+ * Format TPS for chart axis (no decimal, K suffix for large numbers)
+ */
+export function formatTpsAxis(value: number): string {
+  return value >= 1000 ? `${Math.round(value / 1000)}K` : Math.round(value).toString();
+}
+
+/**
+ * Format TPS for tooltip (1 decimal place)
+ */
+export function formatTpsTooltip(value: number): string {
+  return value >= 1000 ? `${(value / 1000).toFixed(1)}K` : value.toFixed(1);
+}
+
+/**
+ * Truncate long model names for chart display
+ */
+export function truncateModelName(name: string, maxLength = 28): string {
+  return name.length > maxLength ? `${name.slice(0, maxLength)}…` : name;
 }
 
 /**
