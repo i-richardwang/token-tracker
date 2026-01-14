@@ -1,6 +1,7 @@
 // Non-standard model name -> standard name
 const MODEL_ALIASES: Record<string, string> = {
   "zai-glm-4.6": "glm-4.6",
+  "zai-glm-4.7": "glm-4.7",
   "gpt-oss-120b": "gpt-oss:120b",
   "glm-4.7-free": "glm-4.7",
 };
@@ -11,6 +12,7 @@ export function normalizeModelName(name: string): string {
 
 const PROVIDER_ALIASES: Record<string, string> = {
   cloud: "openrouter",
+  google: "openrouter",
   "opencode-claude": "opencode",
   "opencode-a": "opencode",
   "opencode-o": "opencode",
@@ -26,7 +28,7 @@ const BRAND_PATTERNS: [RegExp, string][] = [
   [/^(gpt|o1|o3|chatgpt)/i, "OpenAI"],
   [/^claude/i, "Claude"],
   [/^(moonshot|kimi)/i, "Kimi"],
-  [/^(glm|chatglm)/i, "GLM"],
+  [/^(glm|chatglm|zai-glm)/i, "GLM"],
   [/^deepseek/i, "DeepSeek"],
   [/^gemini/i, "Gemini"],
   [/^(llama|meta-llama)/i, "Llama"],
@@ -39,6 +41,7 @@ const BRAND_PATTERNS: [RegExp, string][] = [
   [/^(minimax|abab)/i, "MiniMax"],
   [/^(spark|xunfei)/i, "Spark"],
   [/^baichuan/i, "Baichuan"],
+  [/^nemotron/i, "NVIDIA"],
 ];
 
 export function getModelBrand(modelName: string): string {
