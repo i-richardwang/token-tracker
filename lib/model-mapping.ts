@@ -4,6 +4,7 @@ const MODEL_ALIASES: Record<string, string> = {
   "zai-glm-4.7": "glm-4.7",
   "gpt-oss-120b": "gpt-oss:120b",
   "glm-4.7-free": "glm-4.7",
+  "minimax-m2.1-free": "minimax-m2.1",
   "claude-opus-4-5-thinking": "claude-opus-4-5",
   "claude-sonnet-4-5-thinking": "claude-sonnet-4-5",
 };
@@ -18,6 +19,8 @@ const PROVIDER_ALIASES: Record<string, string> = {
   "opencode-claude": "opencode",
   "opencode-a": "opencode",
   "opencode-o": "opencode",
+  anthropic: "antigravity",
+  openai: "codex",
 };
 
 export function normalizeProviderName(name: string): string {
