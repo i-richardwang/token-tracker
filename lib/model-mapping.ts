@@ -7,6 +7,13 @@ const MODEL_ALIASES: Record<string, string> = {
   "minimax-m2.1-free": "minimax-m2.1",
   "claude-opus-4-5-thinking": "claude-opus-4-5",
   "claude-sonnet-4-5-thinking": "claude-sonnet-4-5",
+  "claude-opus-4-6-thinking": "claude-opus-4-6",
+  "anthropic/claude-opus-4.6": "claude-opus-4-6",
+  "anthropic/claude-sonnet-4.5": "claude-sonnet-4-5",
+  "claude-sonnet-4.5": "claude-sonnet-4-5",
+  "gemini-3-flash": "gemini-3-flash-preview",
+  "gemini-3-pro-high": "gemini-3-pro-preview",
+  "gemini-3-pro-low": "gemini-3-pro-preview",
 };
 
 export function normalizeModelName(name: string): string {
