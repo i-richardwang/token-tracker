@@ -14,6 +14,9 @@ const MODEL_ALIASES: Record<string, string> = {
   "gemini-3-flash": "gemini-3-flash-preview",
   "gemini-3-pro-high": "gemini-3-pro-preview",
   "gemini-3-pro-low": "gemini-3-pro-preview",
+  "claude-opus-4-6-20260203": "claude-opus-4-6",
+  "claude-opus-4.6": "claude-opus-4-6",
+  "claude-haiku-4.5": "claude-haiku-4-5",
 };
 
 export function normalizeModelName(name: string): string {
@@ -26,7 +29,6 @@ const PROVIDER_ALIASES: Record<string, string> = {
   "opencode-claude": "opencode",
   "opencode-a": "opencode",
   "opencode-o": "opencode",
-  anthropic: "antigravity",
   openai: "codex",
 };
 
