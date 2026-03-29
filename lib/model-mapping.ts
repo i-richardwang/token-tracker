@@ -17,6 +17,8 @@ const MODEL_ALIASES: Record<string, string> = {
   "claude-opus-4-6-20260203": "claude-opus-4-6",
   "claude-opus-4.6": "claude-opus-4-6",
   "claude-haiku-4.5": "claude-haiku-4-5",
+  "kimi-k2.5-turbo": "kimi-k2.5",
+  "accounts/fireworks/routers/kimi-k2p5-turbo": "kimi-k2.5",
 };
 
 export function normalizeModelName(name: string): string {
