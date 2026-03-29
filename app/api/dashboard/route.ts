@@ -221,7 +221,7 @@ export async function GET(request: NextRequest) {
           cost: sum(logs.cost),
         })
         .from(logs)
-        .where(dateFilter)
+        .where(and(dateFilter, eq(logs.status, "success")))
         .groupBy(logs.provider),
       db
         .select({
@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
           cost: sum(logs.cost),
         })
         .from(logs)
-        .where(dateFilter)
+        .where(and(dateFilter, eq(logs.status, "success")))
         .groupBy(logs.model),
       db
         .select({
@@ -239,7 +239,7 @@ export async function GET(request: NextRequest) {
           totalLatency: sum(logs.latency),
         })
         .from(logs)
-        .where(dateFilter)
+        .where(and(dateFilter, eq(logs.status, "success")))
         .groupBy(logs.model),
       db
         .select({
