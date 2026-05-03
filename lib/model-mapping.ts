@@ -1,4 +1,6 @@
-// Non-standard model name -> standard name
+// Non-standard model name -> standard name.
+// Keys must be lowercase — lookup lowercases the input, so case variants
+// (DeepSeek-V4-Pro / deepseek-v4-pro) merge without separate entries.
 const MODEL_ALIASES: Record<string, string> = {
   "zai-glm-4.6": "glm-4.6",
   "zai-glm-4.7": "glm-4.7",
@@ -19,10 +21,14 @@ const MODEL_ALIASES: Record<string, string> = {
   "claude-haiku-4.5": "claude-haiku-4-5",
   "kimi-k2.5-turbo": "kimi-k2.5",
   "accounts/fireworks/routers/kimi-k2p5-turbo": "kimi-k2.5",
+  "kimi-k2.6-precision": "kimi-k2.6",
+  "glm-5.1-precision": "glm-5.1",
+  "deepseek-v4-pro-precision": "deepseek-v4-pro",
 };
 
 export function normalizeModelName(name: string): string {
-  return MODEL_ALIASES[name] ?? name;
+  const key = name.toLowerCase();
+  return MODEL_ALIASES[key] ?? key;
 }
 
 const PROVIDER_ALIASES: Record<string, string> = {
@@ -61,8 +67,7 @@ const BRAND_PATTERNS: [RegExp, string][] = [
 ];
 
 export function getModelBrand(modelName: string): string {
-  const normalized = normalizeModelName(modelName).toLowerCase();
-  // Strip common prefixes like "cloud/"
+  const normalized = normalizeModelName(modelName);
   const modelPart = normalized.includes("/")
     ? normalized.split("/").pop() ?? normalized
     : normalized;
