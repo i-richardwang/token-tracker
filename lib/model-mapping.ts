@@ -1,6 +1,8 @@
 // Non-standard model name -> standard name.
 // Keys must be lowercase — lookup lowercases the input, so case variants
 // (DeepSeek-V4-Pro / deepseek-v4-pro) merge without separate entries.
+// OpenRouter-style provider prefixes (deepseek/, anthropic/, ...) are
+// stripped automatically — list them under PROVIDER_PREFIXES below, not here.
 const MODEL_ALIASES: Record<string, string> = {
   "zai-glm-4.6": "glm-4.6",
   "zai-glm-4.7": "glm-4.7",
@@ -10,8 +12,6 @@ const MODEL_ALIASES: Record<string, string> = {
   "claude-opus-4-5-thinking": "claude-opus-4-5",
   "claude-sonnet-4-5-thinking": "claude-sonnet-4-5",
   "claude-opus-4-6-thinking": "claude-opus-4-6",
-  "anthropic/claude-opus-4.6": "claude-opus-4-6",
-  "anthropic/claude-sonnet-4.5": "claude-sonnet-4-5",
   "claude-sonnet-4.5": "claude-sonnet-4-5",
   "gemini-3-flash": "gemini-3-flash-preview",
   "gemini-3-pro-high": "gemini-3-pro-preview",
@@ -26,8 +26,34 @@ const MODEL_ALIASES: Record<string, string> = {
   "deepseek-v4-pro-precision": "deepseek-v4-pro",
 };
 
+// OpenRouter-style provider prefixes auto-stripped before dictionary lookup,
+// so deepseek/deepseek-v4-pro / anthropic/claude-opus-4.6 / etc. don't need
+// per-vendor entries in MODEL_ALIASES.
+const PROVIDER_PREFIXES = new Set([
+  "anthropic",
+  "baidu",
+  "bytedance-seed",
+  "deepseek",
+  "google",
+  "kwaipilot",
+  "minimax",
+  "mistralai",
+  "moonshotai",
+  "nvidia",
+  "openai",
+  "qwen",
+  "tencent",
+  "x-ai",
+  "xiaomi",
+  "z-ai",
+]);
+
 export function normalizeModelName(name: string): string {
-  const key = name.toLowerCase();
+  let key = name.toLowerCase();
+  const slash = key.indexOf("/");
+  if (slash > 0 && PROVIDER_PREFIXES.has(key.slice(0, slash))) {
+    key = key.slice(slash + 1);
+  }
   return MODEL_ALIASES[key] ?? key;
 }
 
