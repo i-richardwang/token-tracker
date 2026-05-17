@@ -289,6 +289,7 @@ export async function GET(request: NextRequest) {
     }
     const tokensByModel = Array.from(tokensByModelMap.entries())
       .map(([model, tokens]) => ({ model, tokens }))
+      .filter((item) => item.model && item.tokens > 0)
       .sort((a, b) => b.tokens - a.tokens)
       .slice(0, 10);
 
@@ -328,6 +329,7 @@ export async function GET(request: NextRequest) {
             ? (data.completionTokens / data.totalLatency) * 1000
             : 0,
       }))
+      .filter((item) => item.model && item.tps > 0)
       .sort((a, b) => b.tps - a.tps)
       .slice(0, 10);
 
