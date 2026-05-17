@@ -12,9 +12,10 @@ interface TokensByProviderChartProps {
 export function TokensByProviderChart({ data, loading }: TokensByProviderChartProps) {
   const { chartData, colorOrder } = useMemo(() => {
     if (!data) return { chartData: undefined, colorOrder: undefined };
-    const sorted = [...data].sort((a, b) => b.tokens - a.tokens);
+    const filtered = data.filter((item) => item.provider && item.tokens > 0);
+    const sorted = [...filtered].sort((a, b) => b.tokens - a.tokens);
     return {
-      chartData: data.map((item) => ({ name: item.provider, value: item.tokens })),
+      chartData: filtered.map((item) => ({ name: item.provider, value: item.tokens })),
       colorOrder: sorted.map((item) => item.provider),
     };
   }, [data]);

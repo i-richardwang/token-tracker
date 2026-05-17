@@ -40,7 +40,9 @@ export function TokensByBrandChart({ data, loading }: TokensByBrandChartProps) {
       return { chartData: [], topBrand: "", topPercentage: 0, brandCount: 0 };
     }
 
-    const sorted = [...data].sort((a, b) => b.tokens - a.tokens);
+    const sorted = data
+      .filter((item) => item.brand && item.tokens > 0)
+      .sort((a, b) => b.tokens - a.tokens);
     const totalTokens = sorted.reduce((sum, item) => sum + item.tokens, 0);
     const top = sorted[0];
 

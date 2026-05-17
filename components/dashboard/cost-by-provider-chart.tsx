@@ -13,9 +13,10 @@ interface CostByProviderChartProps {
 export function CostByProviderChart({ data, loading }: CostByProviderChartProps) {
   const { chartData, colorOrder } = useMemo(() => {
     if (!data) return { chartData: undefined, colorOrder: undefined };
-    const sortedByTokens = [...data].sort((a, b) => b.tokens - a.tokens);
+    const filtered = data.filter((item) => item.provider && item.cost > 0);
+    const sortedByTokens = [...filtered].sort((a, b) => b.tokens - a.tokens);
     return {
-      chartData: data.map((item) => ({ name: item.provider, value: item.cost })),
+      chartData: filtered.map((item) => ({ name: item.provider, value: item.cost })),
       colorOrder: sortedByTokens.map((item) => item.provider),
     };
   }, [data]);

@@ -40,7 +40,9 @@ export function CostByBrandChart({ data, loading }: CostByBrandChartProps) {
       return { chartData: [], topBrand: "", topPercentage: 0, brandCount: 0 };
     }
 
-    const sorted = [...data].sort((a, b) => b.cost - a.cost);
+    const sorted = data
+      .filter((item) => item.brand && item.cost > 0)
+      .sort((a, b) => b.cost - a.cost);
     const totalCost = sorted.reduce((sum, item) => sum + item.cost, 0);
     const top = sorted[0];
 
