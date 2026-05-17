@@ -21,6 +21,7 @@ const MODEL_ALIASES: Record<string, string> = {
   "claude-haiku-4.5": "claude-haiku-4-5",
   "kimi-k2.5-turbo": "kimi-k2.5",
   "accounts/fireworks/routers/kimi-k2p5-turbo": "kimi-k2.5",
+  "accounts/fireworks/routers/kimi-k2p6-turbo": "kimi-k2.6",
   "kimi-k2.6-precision": "kimi-k2.6",
   "glm-5.1-precision": "glm-5.1",
   "deepseek-v4-pro-precision": "deepseek-v4-pro",
