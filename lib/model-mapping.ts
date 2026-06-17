@@ -24,6 +24,8 @@ const MODEL_ALIASES: Record<string, string> = {
   "accounts/fireworks/routers/kimi-k2p6-turbo": "kimi-k2.6",
   "kimi-k2.6-precision": "kimi-k2.6",
   "umans-kimi-k2.6": "kimi-k2.6",
+  "umans-kimi-k2.7": "kimi-k2.7",
+  "umans-qwen3.6-35b-a3b": "qwen3.6-35b-a3b",
   "glm-5.1-precision": "glm-5.1",
   "umans-glm-5.1": "glm-5.1",
   "deepseek-v4-pro-precision": "deepseek-v4-pro",
