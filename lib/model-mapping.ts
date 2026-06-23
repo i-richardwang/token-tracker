@@ -30,6 +30,7 @@ const MODEL_ALIASES: Record<string, string> = {
   "kimi-k2:1t": "kimi-k2",
   "kimi-k2-thinking": "kimi-k2",
   "kimi-k2.6-precision": "kimi-k2.6",
+  "kimi-k2.7-code": "kimi-k2.7",
   "umans-kimi-k2.6": "kimi-k2.6",
   "umans-kimi-k2.7": "kimi-k2.7",
 
@@ -40,6 +41,7 @@ const MODEL_ALIASES: Record<string, string> = {
   "zai-glm-4.6": "glm-4.6",
   "zai-glm-4.7": "glm-4.7",
   "umans-glm-5.1": "glm-5.1",
+  "umans-glm-5.2": "glm-5.2",
   "glm-5.1-precision": "glm-5.1",
   "glm-4.7-free": "glm-4.7",
 
