@@ -8,12 +8,16 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 
-// Mirrors `logs_archive` in the Bifrost log-archive database: a metadata-only
-// copy of the gateway's `logs` table (the large request/response content
-// columns are intentionally not synced). See bifrost-log-archive/01_schema.sql.
+// Mirrors `logs_archive` in the gateway log-archive database: a metadata-only
+// merge of each gateway's request logs (Bifrost `logs`, Manifest
+// `agent_messages`), discriminated by `source`; the large request/response
+// content columns are intentionally not synced. Manifest rows only populate
+// the analytics-core columns plus error_details/metadata — the Bifrost-specific
+// attribution columns stay NULL. See bifrost-log-archive/01_schema.sql.
 export const logs = pgTable("logs_archive", {
   // identity / time
   id: text("id").primaryKey(),
+  source: text("source"), // 'bifrost' | 'manifest'
   incNumber: bigint("inc_number", { mode: "number" }),
   parentRequestId: text("parent_request_id"),
   timestamp: timestamp("timestamp", { withTimezone: true }),
@@ -37,6 +41,7 @@ export const logs = pgTable("logs_archive", {
   completionTokens: integer("completion_tokens"),
   totalTokens: integer("total_tokens"),
   cachedReadTokens: integer("cached_read_tokens"),
+  cacheCreationTokens: integer("cache_creation_tokens"), // Manifest only; NULL on Bifrost rows
   cost: doublePrecision("cost"),
   latency: doublePrecision("latency"),
   tokenUsage: text("token_usage"),
