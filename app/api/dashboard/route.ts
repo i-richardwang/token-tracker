@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         .select({
           totalRequests: count(),
           totalTokens: sum(logs.totalTokens),
-          totalCost: sum(logs.cost),
+          totalCost: sum(logs.costEffective),
           totalLatency: sum(logs.latency),
           avgLatency: avg(logs.latency),
           completionTokens: sum(logs.completionTokens),
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
       db
         .select({
           date: dateFormat,
-          cost: sum(logs.cost),
+          cost: sum(logs.costEffective),
         })
         .from(logs)
         .where(dateFilter)
@@ -218,7 +218,7 @@ export async function GET(request: NextRequest) {
         .select({
           provider: logs.provider,
           tokens: sum(logs.totalTokens),
-          cost: sum(logs.cost),
+          cost: sum(logs.costEffective),
         })
         .from(logs)
         .where(and(dateFilter, eq(logs.status, "success")))
@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
         .select({
           model: logs.model,
           tokens: sum(logs.totalTokens),
-          cost: sum(logs.cost),
+          cost: sum(logs.costEffective),
         })
         .from(logs)
         .where(and(dateFilter, eq(logs.status, "success")))

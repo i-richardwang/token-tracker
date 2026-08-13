@@ -42,7 +42,20 @@ export const logs = pgTable("logs_archive", {
   totalTokens: integer("total_tokens"),
   cachedReadTokens: integer("cached_read_tokens"),
   cacheCreationTokens: integer("cache_creation_tokens"), // Manifest only; NULL on Bifrost rows
+  // What the gateway itself billed. Left as the archive's audit baseline and
+  // NOT what this dashboard sums: gateways record NULL or 0 for whole
+  // providers (subscription routes, free channels, models missing from their
+  // price table), so summing it silently undercounts.
   cost: doublePrecision("cost"),
+  // Filled by the archive's pricing pass: the gateway's own figure where it
+  // billed something, otherwise the usage valued at the model vendor's list
+  // price. costBasis says which ('gateway' | 'listprice' | 'unpriced').
+  costEffective: doublePrecision("cost_effective"),
+  costBasis: text("cost_basis"),
+  // Canonical model behind `model`, resolved by the archive's alias table.
+  // Unused here -- model grouping still runs through normalizeModelName(),
+  // whose prefix stripping also handles models the archive has no alias for.
+  modelKey: text("model_key"),
   latency: doublePrecision("latency"),
   tokenUsage: text("token_usage"),
 
