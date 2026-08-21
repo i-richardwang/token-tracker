@@ -51,6 +51,14 @@ const MODEL_ALIASES: Record<string, string> = {
   "deepseek-v4-pro-precision": "deepseek-v4-pro",
   "umans-deepseek-v4-pro-dspark": "deepseek-v4-pro",
 
+  // Meta -- the contributor tier is the same model bought by granting
+  // training rights, so it charts as one series with the standard one.
+  // Spelled out in full because PROVIDER_PREFIXES here does not yet carry
+  // the Manifest-era gateway prefixes, so nothing is stripped first.
+  "commandcode/meta/muse-spark-1.2-contributor": "muse-spark-1.2",
+  "opencode-go/muse-spark-1.2-contributor": "muse-spark-1.2",
+  "muse-spark-1.2-contributor": "muse-spark-1.2",
+
   // MiniMax
   "minimax-m2.1-free": "minimax-m2.1",
 
@@ -73,6 +81,7 @@ const PROVIDER_PREFIXES = new Set([
   "deepseek",
   "google",
   "kwaipilot",
+  "meta",
   "minimax",
   "mistralai",
   "moonshotai",
@@ -126,6 +135,7 @@ const BRAND_PATTERNS: [RegExp, string][] = [
   [/^deepseek/i, "DeepSeek"],
   [/^gemini/i, "Gemini"],
   [/^(llama|meta-llama)/i, "Llama"],
+  [/^muse-/i, "Meta"],
   [/^grok/i, "Grok"],
   [/^(mistral|mixtral|codestral|ministral|devstral)/i, "Mistral"],
   [/^(yi-|yi\d)/i, "Yi"],
